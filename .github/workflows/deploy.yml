@@ -5,6 +5,7 @@ on:
     branches:
       - main
 
+# Push over SSH
 jobs:
   deploy:
     runs-on: ubuntu-latest
