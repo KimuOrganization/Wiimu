@@ -44,7 +44,7 @@ class VoteView(discord.ui.View):
             return
 
         if(member.voice is None or member.voice.channel != self.session.voice_channel):
-            return await interaction.response.send_mesage(
+            return await interaction.response.send_message(
                 "Debes estar dentro del canal de voz.",
                 ephemeral=True
             )
@@ -175,6 +175,10 @@ class Community(commands.Cog):
             inline=True
         )
 
+        # Evitar warnings de pylance      
+        if session.message is None:
+            return
+
         await session.message.edit(
             embed=embed,
             view=session.view
@@ -206,6 +210,10 @@ class Community(commands.Cog):
                 colour=discord.Colour.red()
             )
 
+        # Evitar warnings de pylance
+        if session.message is None:
+            return
+        
         await session.message.edit(
             embed=embed,
             view=None
@@ -238,7 +246,7 @@ class Community(commands.Cog):
                 if not m.bot
             }
 
-            session.approvals.intersection_updated(valid_members)
+            session.approvals.intersection_update(valid_members)
             session.rejections.intersection_update(valid_members)
 
             if len(valid_members) == 0:
@@ -270,6 +278,9 @@ class Community(commands.Cog):
         interaction: discord.Interaction,
         estado: str
     ):
+        if not interaction.guild:
+            return
+
         if len(estado) > STATE_MAX_LENGTH:
             return await interaction.response.send_message(
                 f"Máximo {STATE_MAX_LENGTH} caracteres.",
@@ -327,6 +338,11 @@ class Community(commands.Cog):
         log_embed.add_field(name="Estado", value=f"```{estado}```",inline=False)
 
         log_channel = interaction.guild.get_channel(int(LOG_CHANNEL_ID))
+
+        # Evitar warnings pylance
+        if not isinstance(log_channel, discord.TextChannel):
+            return
+
         await log_channel.send(embed=log_embed)
 
         if contains_banned_word(estado):

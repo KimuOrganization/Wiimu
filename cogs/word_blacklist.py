@@ -1,13 +1,10 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from datetime import datetime, timezone, timedelta
-from core.config import SPECIAL_CHANNELS, GUILD_ID
-from utils.colors import ModerationColors
+from core.config import GUILD_ID
 from utils.user import resolve_user
 from utils.time import parse_duration
 from utils.moderation import send_moderation_log, send_moderation_dm
-from typing import Union
 
 class WordBlacklist(commands.Cog):
     def __init__(self, bot: commands.Bot):

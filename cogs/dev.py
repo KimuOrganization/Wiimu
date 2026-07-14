@@ -51,7 +51,7 @@ class Dev(commands.Cog):
                 "Ese cog no existe, o no esta registrado. Ver 'core/config.py [BOT_FEATURES]'"
             )
         if cog not in BOT_ENABLED_FEATURES:
-            return await interaction.followupend(
+            return await interaction.followup.send(
                 "Ese cog no se encuentra habilitado. (Habilitalo si queres recargarlo no? friki)"
             )
         try:
