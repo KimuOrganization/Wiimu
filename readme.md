@@ -15,6 +15,10 @@ STAFF_ROLE_ID=
 COMMAND_CHANNEL_ID=
 
 ART_CHANNEL_ID=
+PROJECTS_CHANNEL_ID=
+DESKTOPS_CHANNEL_ID=
+
+HONEYPOT_CHANNEL_ID=
 ```
 
 > [!NOTE]
@@ -22,8 +26,8 @@ ART_CHANNEL_ID=
 
 ## Manual
 
-### Habilitar/Deshabilitar modulos
-<p>Para habilitar o deshabilitar modulos, hay que ir al archivo <a href=".\core\config.py">config.py</a> <i>(core/config.py)</i>, y en la variable <b>BOT_FEATURES</b> agregar o quitar el string que corresponda al modulo ubicado en la carpeta <i>cogs</i>.</p>
+### Agregar modulos
+<p>Para agregar o quitar modulos, hay que ir al archivo <a href=".\core\config.py">config.py</a> <i>(core/config.py)</i>, y en la variable <b>BOT_FEATURES</b> agregar o quitar el string que corresponda al modulo ubicado en la carpeta <i>cogs</i>. Para habilitar o deshabilitar modulos durante la ejecución actual de Wiimu, hay comandos que empiezan con el prefijo <b>/dev</b> ej: <code>/dev_enable_cog</code></p>
 
 ### Modificar colores de los embeds
 <p>Para cambiar los colores de los embeds que manda el bot, tenes que ir al archivo <a href=".\utils\colors.py">colors.py</a> <i>(utils/colors.py)</i>, es bastante intuitivo asi que no creo que requiera mas explicación.</p>
