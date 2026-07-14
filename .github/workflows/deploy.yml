@@ -32,4 +32,4 @@ jobs:
             pip install --upgrade pip
             pip install -r requirements.txt
 
-            systemctl --user restart bot
+            systemctl --user restart Wiimu
