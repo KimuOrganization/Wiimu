@@ -1,0 +1,36 @@
+# Wiimu
+
+## Formato .env
+```ENV
+BOT_TOKEN=
+APPLICATION_ID=
+GUILD_ID=
+
+WELCOME_CHANNEL_ID=
+WELCOME_ROLE_ID=
+WELCOME_IMAGE_PATH=assets\welcome.jpg
+
+LOG_CHANNEL_ID=
+STAFF_ROLE_ID=
+COMMAND_CHANNEL_ID=
+
+ART_CHANNEL_ID=
+```
+
+> [!NOTE]
+> Ninguna variable de entorno es opcional. Están las justas y necesarias para no necesitar tener nada en memoria y tampoco tener la necesidad de persistir cosas en una base de datos.
+
+## Manual
+
+### Habilitar/Deshabilitar modulos
+<p>Para habilitar o deshabilitar modulos, hay que ir al archivo <a href=".\core\config.py">config.py</a> <i>(core/config.py)</i>, y en la variable <b>BOT_FEATURES</b> agregar o quitar el string que corresponda al modulo ubicado en la carpeta <i>cogs</i>.</p>
+
+### Modificar colores de los embeds
+<p>Para cambiar los colores de los embeds que manda el bot, tenes que ir al archivo <a href=".\utils\colors.py">colors.py</a> <i>(utils/colors.py)</i>, es bastante intuitivo asi que no creo que requiera mas explicación.</p>
+
+### Crear nuevos modulos (cogs)
+<p>Para poder crear nuevos modulos que no sean utilidades, si no mas bien features del bot, recomiendo tomar de ejemplo <a href=".\cogs\automatic_threads.py">automatic_threads.py</a> <i>(cogs/art_threads.py)</i> ya que es el modulo mas corto.<p>
+
+> [!NOTE]
+> Es necesario tener el metodo setup al final del codigo para que discord pueda detectar el <b>cog</b> y cargarlo.
+> Una vez que lo programes no olvidarse de habilitarlo. (<a href="#habilitardeshabilitar-modulos">Habilitar/Deshabilitar modulos</a>)
