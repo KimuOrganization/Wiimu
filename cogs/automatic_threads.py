@@ -21,8 +21,11 @@ class AutomaticThreads(commands.Cog):
         # Va a contener info de los usuarios que utilicen el canal de forma indebida
         self.infractions = {}
 
+        # Ventana de tiempo para acumular infracciones
+        self.infraction_window = timedelta(minutes=30)
+
         # Duración de la sanción por el uso inapropiado reiterado del canal
-        self.timeout_duration : int = 30 # minutos
+        self.timeout_duration : int = 60 # minutos
 
         # Razón del timeout
         self.timeout_reason : str = "Se enviaron demasiados mensajes inválidos en el canal {}."
@@ -138,7 +141,7 @@ class AutomaticThreads(commands.Cog):
 
         # Eliminar infracciones con mas de 5 minutos
         # (se ejecuta como mucho 3 veces, no es un loop constante)
-        while warnings and now - warnings[0] > 300:
+        while warnings and now - warnings[0] > self.infraction_window.total_seconds():
             warnings.popleft()
 
         warnings.append(now)
