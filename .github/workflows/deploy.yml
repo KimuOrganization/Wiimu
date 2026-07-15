@@ -5,10 +5,10 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'README.md'
-      - '.gitignore'
-      - 'LICENSE'
-      - 'requirements.txt'
+      - '/README.md'
+      - '/.gitignore'
+      - '/LICENSE'
+      - '/requirements.txt'
       
 
 # Push over SSH
