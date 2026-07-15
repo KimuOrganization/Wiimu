@@ -37,4 +37,4 @@ HONEYPOT_CHANNEL_ID=
 
 > [!NOTE]
 > Es necesario tener el metodo setup al final del codigo para que discord pueda detectar el <b>cog</b> y cargarlo.
-> Una vez que lo programes no olvidarse de habilitarlo. (<a href="#agregar-modulos">Habilitar/Deshabilitar modulos</a>)
+> Una vez que lo programes no olvidarse de habilitarlo. (<a href="#agregar-modulos">Agregar/quitar modulos</a>)
