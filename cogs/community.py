@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import discord
 from discord import app_commands
 from discord.ext import commands
+import time
 from datetime import datetime, timedelta
 from core.config import GUILD_ID, LOG_CHANNEL_ID
 from utils.community import contains_banned_word
@@ -105,6 +106,11 @@ class Community(commands.Cog):
         self.bot = bot
         self.sessions: dict[int, VoteSession] = {}
         self.last_vote: dict[int, datetime] = {}
+
+        # Cooldown individual por usuario para cambiarse el nombre
+        self.nickname_change_cooldown : float = timedelta(minutes=3).total_seconds()
+        self.nickname_change_last_user : Union[int, None] = None
+        self.nickname_change_last_use : float = 0.00
 
     def required_votes(self, channel: discord.VoiceChannel) -> int:
         members = len([
@@ -421,6 +427,65 @@ class Community(commands.Cog):
             ":white_check_mark: Se inició una votación en el chat del canal de voz.",
             ephemeral=True
         )
+
+    @app_commands.guilds(int(GUILD_ID))
+    @app_commands.command(
+        name="cambiar_mi_nick",
+        description="Cambia tu nickname de discord en el servidor."
+    )
+    @app_commands.describe(
+        nickname="Tu nuevo nickname."
+    )
+    async def change_nickname(self, interaction: discord.Interaction, nickname:str):
+        user:  Union[discord.Member, discord.User] = interaction.user
+        # Evitar errores de pylance
+        if not isinstance(user, discord.Member):
+            return
+
+        if len(nickname) > 32:
+            return await interaction.response.send_message(
+                "El nickname no puede superar los 32 caracteres.",
+                ephemeral=True
+            )
+
+        # Verificar palabras prohibidas
+        if contains_banned_word(nickname):
+            return await interaction.response.send_message(
+                "Ese nickname contiene palabras no permitidas.",
+                ephemeral=True
+            )
+        
+        now = time.time()
+
+        if (self.nickname_change_last_user == interaction.user.id 
+            and now - self.nickname_change_last_use < self.nickname_change_cooldown):
+            
+            remaining = int(self.nickname_change_cooldown - (now - self.nickname_change_last_use))
+            
+            return await interaction.response.send_message(
+                f"Debes esperar **{remaining} segundos** antes de volver a cambiar tu nickname.",
+                ephemeral=True
+            )
+
+        self.nickname_change_last_user = interaction.user.id
+        self.nickname_change_last_use = now
+
+        try:
+            await user.edit(nick=nickname)
+            await interaction.response.send_message(
+                f"Tu nickname fue cambiado a **{nickname}**.",
+                ephemeral=True
+            )
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                "No tengo permisos para cambiar tu nickname.",
+                ephemeral=True
+            )
+        except discord.HTTPException:
+            await interaction.response.send_message(
+                "Ocurrió un error al cambiar tu nickname.",
+                ephemeral=True
+            )
 
 async def setup(bot):
     await bot.add_cog(Community(bot))
