@@ -1,7 +1,7 @@
 import discord
 from core.config import COMMAND_CHANNEL_ID,LOG_CHANNEL_ID,STAFF_ROLE_ID
 from datetime import datetime, timedelta, timezone
-from typing import Union, Optional, Tuple
+from typing import Union, Optional, Tuple, Sequence
 import asyncio
 
 async def get_actor_for_action(guild: discord.Guild,target_id: int, action: discord.AuditLogAction) -> Union[discord.User, discord.Member, None]:
@@ -41,7 +41,7 @@ async def send_moderation_log(
     
     await channel.send(f"{message if message else ''}",embed=embed)
 
-async def send_common_log(guild:discord.Guild, embed: discord.Embed, message: Union[str, None] = None):
+async def send_common_log(guild:discord.Guild, embed: discord.Embed, message: Union[str, None] = None, files: Sequence[discord.File] = []):
     channel= guild.get_channel(int(LOG_CHANNEL_ID))
 
     if (not isinstance(channel, discord.TextChannel)):
@@ -49,7 +49,7 @@ async def send_common_log(guild:discord.Guild, embed: discord.Embed, message: Un
             "[ERROR(utils/logs.py - send_common_log)]: El canal de logs no es del tipo 'TextChannel'. Revisar variable de entorno 'LOG_CHANNEL_ID'."
         )
     
-    await channel.send(f"{message if message else ''}", embed=embed)
+    await channel.send(f"{message if message else ''}", embed=embed, files=files)
 
 async def send_moderation_dm(
     *,

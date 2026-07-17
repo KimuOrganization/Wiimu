@@ -6,8 +6,9 @@ from utils.time import format_duration
 from utils.permissions import diff_permission, diff_overwrites
 from utils.moderation import get_actor_for_action, get_actor_for_moderation_action, send_common_log, send_moderation_log
 from utils.colors import LogColors, ModerationColors
-from typing import Union
+from typing import Union, Sequence
 discord.abc.GuildChannel
+from io import BytesIO
 
 GuildChannel = Union[discord.TextChannel,discord.VoiceChannel,discord.StageChannel,discord.ForumChannel,discord.CategoryChannel]
 
@@ -141,12 +142,41 @@ class Logs(commands.Cog):
             timestamp=datetime.now(),
             description=f"**Canal:** {before.channel.mention}\n"
         )
-        embed.add_field(name="Antes", value=before.content, inline=False)
-        embed.add_field(name="Despues", value=after.content, inline=False)
+
+        # Declaraciones
+        text : Union[str, None] = None
+        file : Union[discord.File, None] = None
+        files : Sequence[discord.File] = []
+        
+        # Evitar excepciones de discord por superar el limite de caracteres
+        if (len(before.content) > 1024 or len(after.content) > 1024):
+            text = (
+                "# Antes:\n\n"
+                f"{before.content}\n\n"
+                "----------------------------------------------------------------\n\n"
+                "# Despues:\n\n"
+                f"{after.content}"
+            )
+            file = discord.File(
+                BytesIO(text.encode("utf-8")),
+                filename=f"mensaje_editado_{before.id}.txt"
+            )
+            embed.add_field(
+                name="Contenido",
+                value="El mensaje es demasiado largo. Se adjunta un archivo con el contenido completo.",
+                inline=False
+            )
+        else:
+            embed.add_field(name="Antes", value=before.content, inline=False)
+            embed.add_field(name="Despues", value=after.content, inline=False)
         embed.set_author(name=before.author.name, icon_url=before.author.display_avatar.url)
         embed.set_footer(text="ID: " +str(before.author.id))
 
-        await send_common_log(guild=before.guild, embed=embed)
+        # Agrego el archivo si es que se creo uno
+        if not file is None:
+            files = [file]
+
+        await send_common_log(guild=before.guild, embed=embed, files=files)
 
     #region on_voice_state_update
     @commands.Cog.listener()

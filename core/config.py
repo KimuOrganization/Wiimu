@@ -11,8 +11,7 @@ BOT_DISABLED_FEATURES : Set[str] = set()
 # Función para cargar las variables de entorno y evitar variables nulas
 def get_env(name: str) -> str:
     value = os.getenv(name)
-    if (value is None):
-        # TODO - Bloquear la ejecución si ocurre esto.
+    if (value is None or not value.strip()):
         raise RuntimeError(f"ERROR(ENV): Falta la variable de entorno {name}.")
     return value
 

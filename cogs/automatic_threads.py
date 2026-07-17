@@ -45,8 +45,8 @@ class AutomaticThreads(commands.Cog):
             return "Desktop"
         else:
             raise RuntimeError("[ERROR(cogs/automatic_threads.py - thread_channel)] Ha ocurrido un error al intentar detectar el prefijo para el hilo. (Revisar casos del condicional)")
-                
-    def is_art_message(self, message: discord.Message) -> bool:
+     
+    def is_threadable_message(self, message: discord.Message) -> bool:
         if has_attachments(message):
             return True
         if has_threadable_link(message.content):
@@ -179,7 +179,7 @@ class AutomaticThreads(commands.Cog):
         if message.author.bot:
             return
         
-        if not self.is_art_message(message):
+        if not self.is_threadable_message(message):
             await self.handle_art_violation(message)
             await message.delete()
             return
