@@ -103,9 +103,35 @@ class Logs(commands.Cog):
                 message_attachments += "\n\u2800\u2800"
                 message_attachments += f"{attachment.url}"
         
+        # Mensaje default en caso de que mida <= 4000 caracteres
+        text :str = (
+            f"**Canal:** {message.channel.mention}\n"
+            f"```{message_content}```\n"
+            f"**Attachments:**{message_attachments}"
+        )
+        text_size = len(text)
+
+        file : Union[discord.File, None] = None
+        files: Sequence[discord.File] = []
+        # Reviso si el tamaño es superior al maximo que tolera discord en la descripción de los embeds
+        if (text_size > 4000):
+            # Dejo solo el canal y los attachments en el texto de la descripción
+            text = (
+                f"**Canal:** {message.channel.mention}\n"
+                "El mensaje es demasiado largo. Se adjunto un archivo con el contenido completo.\n"
+                f"**Attachments:**{message_attachments}"
+                )
+            # Creo un archivo de texto para guardar la información del mensaje borrado
+            file = discord.File(
+                BytesIO(message_content.encode("utf-8")),
+                filename=f"mensaje_eliminado_{message.author.id}.txt"
+            )
+            # Adjunto el archivo al log
+            files = [file]
+
         embed = discord.Embed(
             title="Mensaje eliminado",
-            description=f"**Canal:** {message.channel.mention}\n```{message_content}```\n**Attachments:**{message_attachments}",
+            description=text,
             color=LogColors.MESSAGE_DELETE,
             timestamp=datetime.now()
         )
@@ -117,9 +143,17 @@ class Logs(commands.Cog):
             staff_role = message.guild.get_role(int(STAFF_ROLE_ID))
             newline = "\n"
             additional_line : Union[str,None] = f"{(newline+staff_role.mention*3) if staff_role else None}"
-            return await message.channel.send(f"### :exclamation: Se intento borrar este log, re-subida automatica :exclamation:{additional_line}",embeds=message.embeds)
+            # En caso de que sea un log que haya guardado el contenido como archivo por superar el tamaño maximo de caracteres
+            log_files : Sequence[discord.File] = []
+            for attachment in message.attachments:
+                try:
+                    log_files.append(await attachment.to_file())
+                except discord.HTTPException:
+                    pass
+            
+            return await message.channel.send(f"### :exclamation: Se intento borrar este log, re-subida automatica :exclamation:{additional_line}",embeds=message.embeds, files=log_files)
 
-        await send_common_log(guild=message.guild, embed=embed)
+        await send_common_log(guild=message.guild, embed=embed, files=files)
 
     #region on_message_edit
     @commands.Cog.listener()
