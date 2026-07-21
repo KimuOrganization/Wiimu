@@ -1,6 +1,6 @@
 from __future__ import annotations
 import json
-from typing import Any
+from typing import Any, Union
 from enum import StrEnum
 
 import discord
@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 class JsonListOperation(StrEnum):
     ADD = "ADD"
     REMOVE = "REMOVE"
+
 
 
 class Settings(commands.Cog):
@@ -326,6 +327,8 @@ class Settings(commands.Cog):
                 f"Configuración actualizada.\n\n`{key}` = `{value}`",
                 ephemeral=True
             )
+        except ValueError as vex:
+            return await interaction.response.send_message(vex, ephemeral=True)
         except Exception:
             logger.exception("Excepción no controlada al actualizar una configuración de tipo %s", config_type)
             return await interaction.response.send_message(
