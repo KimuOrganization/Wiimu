@@ -5,7 +5,7 @@
 BOT_TOKEN=
 APPLICATION_ID=
 GUILD_ID=
-DATABASE_PATH=core\Wiimu_Production_Database.sqlite3
+DATABASE_PATH=core/Wiimu_Production_Database.sqlite3
 ```
 
 > [!NOTE]
