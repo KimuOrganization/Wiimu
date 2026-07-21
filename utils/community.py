@@ -10,10 +10,12 @@ BANNED_WORDS = {
     "retard"
 }
 
+# Palabras que si son encontradas, no van a interferir con el patron de palabras baneadas
 BORDER_WORDS = {
     "nigeria",
     "nigeriana",
     "nigeriano",
+    "nigerianas",
     "nigerianos"
 }
 
@@ -54,6 +56,7 @@ def contains_banned_word(text: str) -> bool:
     normalized = collapse_repeated(normalize_text(text))
     cleaned = normalized
 
+    # Quito las palabras que son edge case para evitar detecciones erroneas
     for border in BORDER_WORDS:
         cleaned = cleaned.replace(border,"")
 

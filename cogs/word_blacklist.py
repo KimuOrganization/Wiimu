@@ -2,9 +2,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from core.config import GUILD_ID
-from utils.user import resolve_user
-from utils.time import parse_duration
-from utils.moderation import send_moderation_log, send_moderation_dm
 
 class WordBlacklist(commands.Cog):
     def __init__(self, bot: commands.Bot):

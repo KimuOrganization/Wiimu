@@ -2,16 +2,39 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from datetime import datetime, timezone, timedelta
-from core.config import SPECIAL_CHANNELS, GUILD_ID
-from utils.colors import ModerationColors
+from core.bot import Bot
+from core.config import GUILD_ID
+from core.config_sections.channels import Channels
+from core.config_sections.colors import Colors
 from utils.user import resolve_user
 from utils.time import parse_duration
 from utils.moderation import send_moderation_log, send_moderation_dm
 from typing import Union
 
 class Moderation(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: Bot):
         self.bot = bot
+
+    @property
+    def channels(self) -> Channels:
+        return self.bot.config.channels # type: ignore
+    
+    @property
+    def staff_channels(self) -> list[int]:
+        return [
+            self.channels.staff.LOGS,
+            self.channels.staff.COMMAND_LOGS,
+            self.channels.staff.TTS_LOGS,
+            self.channels.staff.MODERATOR_ONLY
+        ]
+
+    @property
+    def roles(self):
+        return self.bot.config.roles # type: ignore
+
+    @property
+    def colors(self) -> Colors:
+        return self.bot.config.colors # type: ignore
 
     #region send_dm
     @app_commands.guilds(int(GUILD_ID))
@@ -35,7 +58,8 @@ class Moderation(commands.Cog):
                 target=usuario,
                 title="Mensaje del staff",
                 description=mensaje,
-                color=ModerationColors.PRIVATE_MESSAGE,
+                color=self.colors.moderation.PRIVATE_MESSAGE,
+                staff_role_id=self.roles.staff.MODERATORS,
                 mandar_dm=True
                 )
         except:
@@ -44,7 +68,7 @@ class Moderation(commands.Cog):
         # Moderation log
         log_embed = discord.Embed(
             title="Mensaje enviado a usuario.",
-            color=ModerationColors.PRIVATE_MESSAGE,
+            color=self.colors.moderation.PRIVATE_MESSAGE,
             description=(
                 f"**Moderador/a:** {interaction.user.mention}\n"
                 f"**Usuario:** `{usuario.name} [{usuario.id}`]\n"
@@ -56,7 +80,8 @@ class Moderation(commands.Cog):
 
         await send_moderation_log(
             guild=guild,
-            embed=log_embed
+            embed=log_embed,
+            command_log_channel_id=self.channels.staff.COMMAND_LOGS
         )
 
         return await interaction.followup.send(f"El mensaje dirigido a {usuario.mention} fue enviado con exito.")
@@ -105,7 +130,7 @@ class Moderation(commands.Cog):
                 f"**Razón:** {razón or 'No especificada'}\n"
                 f"**Moderador/a:** {interaction.user.mention}\n"),
             timestamp=datetime.now(),
-            color=ModerationColors.BAN
+            color=self.colors.moderation.BAN
         )
         embed.set_author(name=f"{guild.name}",icon_url=guild.icon.url if guild.icon else None)
         embed.add_field(name="Baneado", value=f"\u2800\u2800`{target.name} [{target.id}]`", inline=False)
@@ -116,7 +141,8 @@ class Moderation(commands.Cog):
             target=target,
             title="Has sido banead@ del servidor",
             description=f"**Razón:** {razón or 'No especificada'}",
-            color=ModerationColors.BAN,
+            color=self.colors.moderation.BAN,
+            staff_role_id=self.roles.staff.MODERATORS,
             mandar_dm=mandar_dm
         )
 
@@ -138,7 +164,7 @@ class Moderation(commands.Cog):
             f"{target.mention} fue baneado.", ephemeral=True
         )
 
-        return await send_moderation_log(guild, embed)
+        return await send_moderation_log(guild, embed, self.channels.staff.COMMAND_LOGS)
 
     #region kick
     @app_commands.guilds(int(GUILD_ID))
@@ -180,7 +206,7 @@ class Moderation(commands.Cog):
                 f"**Razón:** {razón or 'No especificada'}\n"
                 f"**Moderador/a:** {interaction.user.mention}\n"),
             timestamp=datetime.now(),
-            color=ModerationColors.KICK
+            color=self.colors.moderation.KICK
         )
         embed.add_field(name="Expulsado", value=f"\u2800\u2800`{target.name} [{target.id}]`", inline=False)
         embed.set_author(name=f"{guild.name}", icon_url=guild.icon.url if guild.icon else None)
@@ -191,7 +217,8 @@ class Moderation(commands.Cog):
             target=target,
             title="Has sido expulsad@ del servidor",
             description=f"**Razón:** {razón or 'No especificada'}",
-            color=ModerationColors.KICK,
+            color=self.colors.moderation.KICK,
+            staff_role_id=self.roles.staff.MODERATORS,
             mandar_dm=mandar_dm)
 
         try:
@@ -211,7 +238,7 @@ class Moderation(commands.Cog):
             f"{target.mention} fue expulsado.", ephemeral=True
         )
 
-        return await send_moderation_log(guild, embed)
+        return await send_moderation_log(guild, embed, self.channels.staff.COMMAND_LOGS)
 
     #region mute
     @app_commands.guilds(int(GUILD_ID))
@@ -271,7 +298,7 @@ class Moderation(commands.Cog):
                 f"**Moderador/a:** {interaction.user.mention}\n"
                 f"**Hasta:** <t:{int(until.timestamp())}:f>"),
             timestamp=datetime.now(),
-            color=ModerationColors.MUTE,
+            color=self.colors.moderation.MUTE,
         )
         embed.add_field(name="Aislado", value=f"\u2800\u2800`{target.name} [{target.id}]`", inline=False)
         embed.set_author(name=f"{guild.name}", icon_url=guild.icon.url if guild.icon else None)
@@ -282,7 +309,8 @@ class Moderation(commands.Cog):
             target=target,
             title="Has sido aislad@ en el servidor",
             description=f"**Razón:** {razón or 'No especificada'}",
-            color=ModerationColors.MUTE,
+            color=self.colors.moderation.MUTE,
+            staff_role_id=self.roles.staff.MODERATORS,
             mandar_dm=mandar_dm)
 
         try:
@@ -301,7 +329,7 @@ class Moderation(commands.Cog):
             f"{target.mention} fue aislado.", ephemeral=True
         )
 
-        return await send_moderation_log(guild, embed)
+        return await send_moderation_log(guild, embed, self.channels.staff.COMMAND_LOGS)
     
     #region softban
     @app_commands.guilds(int(GUILD_ID))
@@ -347,7 +375,7 @@ class Moderation(commands.Cog):
                 f"**Razón:** {razón or 'No especificada'}\n"
                 f"**Moderador/a:** {interaction.user.mention}\n"),
             timestamp=datetime.now(),
-            color=ModerationColors.SOFT_BAN
+            color=self.colors.moderation.SOFT_BAN
         )
         embed.add_field(name="Soft-baneado", value=f"\u2800\u2800`{target.name} [{target.id}]`", inline=False)
         embed.set_author(name=f"{guild.name}",icon_url=guild.icon.url if guild.icon else None)
@@ -358,7 +386,8 @@ class Moderation(commands.Cog):
             target=target,
             title="Has sido expulsad@ del servidor",
             description=f"**Razón:** {razón or 'No especificada'}",
-            color=ModerationColors.KICK,
+            color=self.colors.moderation.KICK,
+            staff_role_id=self.roles.staff.MODERATORS,
             mandar_dm=mandar_dm)
 
         try:
@@ -384,7 +413,7 @@ class Moderation(commands.Cog):
             f"{target.mention} fue soft-baneado.", ephemeral=True
         )
 
-        return await send_moderation_log(guild, embed)
+        return await send_moderation_log(guild, embed, self.channels.staff.COMMAND_LOGS)
     
     #region purgar_mensajes
     @app_commands.guilds(int(GUILD_ID))
@@ -416,7 +445,7 @@ class Moderation(commands.Cog):
         desired_channel = canal
         channel_to_purge = desired_channel if desired_channel else current_channel
         
-        if (channel_to_purge and (channel_to_purge.id in SPECIAL_CHANNELS)):
+        if (channel_to_purge and (channel_to_purge.id in self.staff_channels)):
             return await interaction.followup.send("No puedes ejecutar este comando en canales de moderación.")
 
 
@@ -451,7 +480,7 @@ class Moderation(commands.Cog):
                 f"**Moderador/a:** {interaction.user.mention}\n"
                 f"**Cantidad de mensajes eliminados:** {len(deleted)}\n"),
             timestamp=datetime.now(),
-            color=ModerationColors.MESSAGE_PURGE
+            color=self.colors.moderation.MESSAGE_PURGE
         )
         embed.set_author(name=f"{guild.name}",icon_url=guild.icon.url if guild.icon else None)
         embed.set_footer(text="ID: "+str(interaction.user.id))
@@ -461,7 +490,7 @@ class Moderation(commands.Cog):
             ephemeral=True
         )
 
-        return await send_moderation_log(guild, embed)
+        return await send_moderation_log(guild, embed, self.channels.staff.COMMAND_LOGS)
 
 async def setup(bot):
     await bot.add_cog(Moderation(bot))

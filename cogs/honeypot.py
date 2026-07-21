@@ -1,22 +1,38 @@
 import discord
 from discord.ext import commands
 from typing import Union
-from core.config import HONEYPOT_CHANNEL_ID, COMMAND_CHANNEL_ID, ART_CHANNEL_ID, PROJECTS_CHANNEL_ID, DESKTOPS_CHANNEL_ID
-from utils.colors import ModerationColors
 from datetime import datetime
-
-AUTO_THREAD_CHANNELS = [ART_CHANNEL_ID, PROJECTS_CHANNEL_ID, DESKTOPS_CHANNEL_ID]
+from core.bot import Bot
+from core.config_sections.channels import Channels
+from core.config_sections.colors import Colors
 
 class HoneyPot(commands.Cog):
-    def __init__(self,bot:commands.Bot):
+    def __init__(self,bot:Bot):
         self.bot = bot
+
+    @property
+    def colors(self) -> Colors:
+        return self.bot.config.colors # type: ignore
+    
+    @property
+    def channels(self) -> Channels:
+        return self.bot.config.channels # type: ignore
+    
+    # Sin usar: En caso de que en el futuro se implemente el borrado automático de los ultimos hilos de usuarios baneados por cuenta hacekada
+    @property
+    def auto_thread_channels(self) -> list[int]:
+        return [
+            self.channels.auto_threadable.ART,
+            self.channels.auto_threadable.PROJECTS,
+            self.channels.auto_threadable.DESKTOPS
+        ]
 
     async def _send_ban_dm(self,guild:discord.Guild, user:Union[discord.User, discord.Member], reason:str):
         """Enviar un dm ANTES del baneo"""
         embed = discord.Embed(
             title= "Has sido banead@ del servidor",
             description=f"**Razón:** {reason or 'No especificada.'}",
-            color=ModerationColors.BAN,
+            color=self.colors.moderation.BAN,
             timestamp=datetime.now()
         )
         embed.set_author(
@@ -54,7 +70,7 @@ class HoneyPot(commands.Cog):
         embed.add_field(name=f"Baneado", value=f"\u2800\u2800`{user.name} [{user.id}]`", inline=False)
         embed.set_footer(text="ID: "+str(user.id))
         
-        log_channel = guild.get_channel(int(COMMAND_CHANNEL_ID))
+        log_channel = guild.get_channel(self.channels.staff.COMMAND_LOGS)
 
         # Evitar warning de pylance
         if not isinstance(log_channel, discord.TextChannel):
@@ -77,7 +93,7 @@ class HoneyPot(commands.Cog):
             return
         
         # Ignorar otros canales
-        if str(message.channel.id) !=str(HONEYPOT_CHANNEL_ID):
+        if str(message.channel.id) !=str(self.channels.common.HONEYPOT):
             return
 
 

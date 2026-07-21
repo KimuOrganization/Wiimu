@@ -1,7 +1,17 @@
-*/__pycache__
+# Sensitive data
 .env
+
+# Python cache
+*__pycache__
+
+# Virtual environment
 bin
 include
 lib
 lib64
 pyvenv.cfg
+
+# Development DB and Journal Files
+/core/Wiimu_Development_Database.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal

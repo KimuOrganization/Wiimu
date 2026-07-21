@@ -1,9 +1,11 @@
 import discord
 from discord.ext import commands
 from datetime import timedelta
+from core.bot import Bot
+from core.config_sections.channels import Channels
+from core.config_sections.roles import Roles
 from utils.message import INVITE_REGEX, BANNED_PHRASES
 from utils.colors import ModerationColors
-from core.config import COMMAND_CHANNEL_ID,STAFF_ROLE_ID
 from datetime import datetime
 from utils.time import format_duration
 from typing import Union
@@ -14,11 +16,19 @@ MUTE_DURATION = timedelta(hours=24)
 PARSED_DURATION = format_duration(MUTE_DURATION)
 
 class MessageFilter(commands.Cog):
-    def __init__(self, bot:commands.Bot) -> None:
+    def __init__(self, bot: Bot) -> None:
         self.bot = bot
 
+    @property
+    def channels(self) -> Channels:
+        return self.bot.config.channels # type: ignore
+    
+    @property
+    def roles(self) -> Roles:
+        return self.bot.config.roles # type: ignore
+
     async def log_filter(self,guild: discord.Guild, member:Union[discord.User,discord.Member], message: discord.Message, reason:str, sanctionWithBan:bool = True):
-        log_channel = guild.get_channel(int(COMMAND_CHANNEL_ID))
+        log_channel = guild.get_channel(self.channels.staff.COMMAND_LOGS)
         
         duration_message = f"Duración del aislamiento: {PARSED_DURATION}\n"
 
@@ -38,7 +48,7 @@ class MessageFilter(commands.Cog):
             embed.set_author(name=guild.name,icon_url=guild.icon.url if guild.icon else None)
             embed.set_footer(text=f"ID: {member.id}")
 
-            staff_role = guild.get_role(int(STAFF_ROLE_ID))
+            staff_role = guild.get_role(self.roles.staff.MODERATORS)
             newline = "\n"
             additional_line : Union[str,None] = f"{(newline+staff_role.mention*3) if staff_role else None}"
             await log_channel.send(additional_line,embed=embed,silent=True)
@@ -171,5 +181,5 @@ class MessageFilter(commands.Cog):
         await self.handle_discord_invites(message)
         await self.handle_banned_phrases(message)
 
-async def setup(bot: commands.Bot):
+async def setup(bot: Bot):
     await bot.add_cog(MessageFilter(bot))
