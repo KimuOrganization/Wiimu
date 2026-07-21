@@ -5,26 +5,108 @@ import asyncio
 import logging
 logger = logging.getLogger(__name__)
 
-async def get_actor_for_action(guild: discord.Guild,target_id: int, action: discord.AuditLogAction) -> Union[discord.User, discord.Member, None]:
-    async for entry in guild.audit_logs(limit=1, action=action):
-        if (entry is None or entry.target is None):
-            return None
-        
-        if (entry.target.id == target_id):
-            if (entry.created_at < discord.utils.utcnow() - timedelta(seconds=5)):
-                return None
-            return entry.user
+async def get_actor_for_action(
+    guild: discord.Guild,
+    target_id: int,
+    action: discord.AuditLogAction,
+) -> discord.User | discord.Member | None:
+    try:
+        async for entry in guild.audit_logs(limit=1, action=action):
+            target = getattr(entry.target, "id", None)
+
+            if target == target_id:
+                return entry.user
+
+    except discord.Forbidden:
+        logger.warning(
+            "El bot no tiene permisos para leer Audit Logs en '%s' (%s).",
+            guild.name,
+            guild.id,
+        )
+
+    except discord.DiscordServerError as ex:
+        # Error 5xx del lado de Discord/Cloudflare
+        logger.warning(
+            "Discord devolvió un error de servidor al consultar Audit Logs (%s)."
+            "Se omitirá el actor de la acción.",
+            ex.status,
+        )
+
+    except discord.HTTPException as ex:
+        logger.warning(
+            "HTTPException al consultar Audit Logs: %s (status=%s)",
+            ex,
+            getattr(ex, "status", "unknown"),
+        )
+
+    except Exception:
+        logger.exception(
+            "Excepción inesperada al consultar Audit Logs."
+        )
 
     return None
 
-async def get_actor_for_moderation_action(guild: discord.Guild, target_id: int, action: discord.AuditLogAction) -> Tuple[Optional[Union[discord.Member, discord.User]],Optional[str]]:
-    await asyncio.sleep(1.5) # Delay para esperar a que el audit log se genere
+async def get_actor_for_moderation_action(
+    guild: discord.Guild,
+    target_id: int,
+    action: discord.AuditLogAction,
+) -> tuple[
+    Optional[Union[discord.Member, discord.User]],
+    Optional[str],
+]:
+    # Esperar a que Discord genere el audit log
+    await asyncio.sleep(1.5)
 
-    async for entry in guild.audit_logs(limit=5, action=action):
-        if entry.target and entry.target.id == target_id:
-            delta = datetime.now(timezone.utc) - entry.created_at
-            if (delta.total_seconds() < 10):
+    try:
+        async for entry in guild.audit_logs(limit=5, action=action):
+            target = getattr(entry.target, "id", None)
+
+            if target != target_id:
+                continue
+
+            # utcnow() de discord.py ya devuelve datetime aware en UTC
+            delta = discord.utils.utcnow() - entry.created_at
+
+            # Aceptar entradas recientes (10 segundos)
+            if delta.total_seconds() < 10:
                 return entry.user, entry.reason
+
+    except discord.Forbidden:
+        logger.warning(
+            "El bot no tiene permisos para leer Audit Logs en '%s' (%s).",
+            guild.name,
+            guild.id,
+        )
+
+    except discord.DiscordServerError as ex:
+        # Errores 5xx del lado de Discord/Cloudflare (como el 520 que viste)
+        logger.warning(
+            "Discord devolvió un error de servidor al consultar Audit Logs "
+            "para la acción %s en '%s' (%s). status=%s",
+            action,
+            guild.name,
+            guild.id,
+            ex.status,
+        )
+
+    except discord.HTTPException as ex:
+        logger.warning(
+            "HTTPException al consultar Audit Logs para la acción %s en '%s' (%s): %s (status=%s)",
+            action,
+            guild.name,
+            guild.id,
+            ex,
+            getattr(ex, "status", "unknown"),
+        )
+
+    except Exception:
+        logger.exception(
+            "Excepción inesperada al consultar Audit Logs para la acción %s en '%s' (%s).",
+            action,
+            guild.name,
+            guild.id,
+        )
+
     return None, None
         
 
