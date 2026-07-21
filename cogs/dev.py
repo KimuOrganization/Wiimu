@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
+from discord import Permissions, app_commands
 from core.config import BOT_FEATURES, BOT_ENABLED_FEATURES, BOT_DISABLED_FEATURES, GUILD_ID
 
 class Dev(commands.Cog):
@@ -36,14 +36,22 @@ class Dev(commands.Cog):
                 )
         return results [:25]
 
-    @app_commands.guilds(int(GUILD_ID))
-    @app_commands.command(
-        name="dev_reload_cog",
+    #region Command group
+    config_group = app_commands.Group(
+        name="dev",
+        description="Herramientas de desarrollo del bot",
+        guild_only=True,
+        guild_ids=[int(GUILD_ID)],
+        default_permissions=Permissions(administrator=True)
+    )
+
+    
+    #region Reload Cog command
+    @config_group.command(
+        name="reload_cog",
         description="Recarga una feature específica."
     )
     @app_commands.autocomplete(cog=enabled_cogs_autocomplete)
-    @app_commands.default_permissions(manage_messages=True, kick_members=True, ban_members=True, moderate_members=True)
-    @app_commands.checks.has_permissions(manage_messages=True, kick_members=True, ban_members=True, moderate_members=True)
     async def reload_cog(self, interaction: discord.Interaction, cog:str):
         await interaction.response.defer(ephemeral=True)
         if cog not in BOT_FEATURES:
@@ -66,13 +74,11 @@ class Dev(commands.Cog):
         except Exception as e:
             return await interaction.followup.send("Error al recargar `{0}`:\n```{1}```".format(cog,e))
     
-    @app_commands.guilds(int(GUILD_ID))
-    @app_commands.command(
-        name="dev_reload_all_cogs",
+    #region Reload All cogs command
+    @config_group.command(
+        name="reload_all_cogs",
         description="Recarga todas las features del bot."
     )
-    @app_commands.default_permissions(manage_messages=True, kick_members=True, ban_members=True, moderate_members=True)
-    @app_commands.checks.has_permissions(manage_messages=True, kick_members=True, ban_members=True, moderate_members=True)
     async def reload_all_cogs(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         ok = []
@@ -105,16 +111,14 @@ class Dev(commands.Cog):
             )
         return await interaction.followup.send(msg)
 
-    #pendiente agregar funciones para agregar y deshabilitar modulos
     
-    @app_commands.guilds(int(GUILD_ID))
-    @app_commands.command( 
-        name="dev_enable_cog",
+    
+    #region Enable Cog command
+    @config_group.command( 
+        name="enable_cog",
         description="Habilita una feature específica del bot."
     )
     @app_commands.autocomplete(cog=disabled_cogs_autocomplete)
-    @app_commands.default_permissions(manage_messages=True, kick_members=True, ban_members=True, moderate_members=True)
-    @app_commands.checks.has_permissions(manage_messages=True, kick_members=True, ban_members=True, moderate_members=True)
     async def enable_cog(self, interaction: discord.Interaction, cog:str):
         await interaction.response.defer(ephemeral=True)
 
@@ -141,14 +145,12 @@ class Dev(commands.Cog):
                 "Error al habilitar `{0}`:\n```{1}```".format(cog,e)
             )
 
-    @app_commands.guilds(int(GUILD_ID))
-    @app_commands.command(
-        name="dev_disable_cog",
+    #region Disable Cog command
+    @config_group.command(
+        name="disable_cog",
         description="Deshabilita una feature específica del bot."
     )
     @app_commands.autocomplete(cog=enabled_cogs_autocomplete) 
-    @app_commands.default_permissions(manage_messages=True, kick_members=True, ban_members=True, moderate_members=True) 
-    @app_commands.checks.has_permissions(manage_messages=True, kick_members=True, ban_members=True, moderate_members=True)
     async def disable_cog(self, interaction:discord.Interaction, cog:str):
         await interaction.response.defer(ephemeral=True)
 
@@ -156,7 +158,7 @@ class Dev(commands.Cog):
             return await interaction.followup.send(
                 "Ese cog no existe o no esta registrado. Ver 'core/config.py [BOT_FEATURES]'"
             )
-        if cog == "dev":
+        if cog == "dev" or cog == "settings":
             return await interaction.followup.send(
                 "Este modulo no es deshabilitable por comandos."
             )

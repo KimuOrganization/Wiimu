@@ -1,22 +1,20 @@
 import discord
 from discord.ext import commands
-from core.config import ART_CHANNEL_ID, PROJECTS_CHANNEL_ID, DESKTOPS_CHANNEL_ID, COMMAND_CHANNEL_ID
+from core.bot import Bot
+from core.config_sections.channels import Channels
+from core.config_sections.colors import Colors
 from utils.message import has_attachments, has_threadable_link, has_threadable_embed
 import time
 from datetime import timedelta, datetime, timezone
 from collections import deque
-from utils.colors import ModerationColors
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AutomaticThreads(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot : Bot):
         self.bot = bot
-        self.art_channel_id = int(ART_CHANNEL_ID)
-        self.projects_channel_id = int(PROJECTS_CHANNEL_ID)
-        self.desktops_channel_id = int(DESKTOPS_CHANNEL_ID)
-
-        # Sacar o añadir IDs de canales aca para deshabilitar/habilitar la creación automatica
-        self.channels = [self.art_channel_id, self.projects_channel_id, self.desktops_channel_id]
 
         # Va a contener info de los usuarios que utilicen el canal de forma indebida
         self.infractions = {}
@@ -30,6 +28,23 @@ class AutomaticThreads(commands.Cog):
         # Razón del timeout
         self.timeout_reason : str = "Se enviaron demasiados mensajes inválidos en el canal {}."
 
+    @property
+    def channels(self) -> Channels:
+        return self.bot.config.channels # type: ignore
+    
+    @property
+    def colors(self) -> Colors:
+        return self.bot.config.colors # type: ignore
+    
+    # Canales en los que se van a crear hilos
+    @property
+    def enabled_threadable_channels(self) -> list[int]:
+        return [
+            self.channels.auto_threadable.ART,
+            self.channels.auto_threadable.DESKTOPS,
+            self.channels.auto_threadable.PROJECTS
+        ]
+
     """ 
     En el caso de que se agreguen mas canales en los que se deban generar hilos automaticamente
     hay que agregar un case, que corresponda al id del canal, y cuyo valor devuelto sea el prefijo
@@ -37,11 +52,11 @@ class AutomaticThreads(commands.Cog):
     Ejemplos: 'Arte' de {nombre} | 'Proyecto' de {nombre} | 'Desktop' de {nombre}
     """
     def get_thread_prefix(self, id:int):
-        if (id == self.art_channel_id):
+        if (id == self.channels.auto_threadable.ART):
             return "Arte"
-        elif(id == self.projects_channel_id):
+        elif(id == self.channels.auto_threadable.PROJECTS):
             return "Proyecto"
-        elif(id == self.desktops_channel_id):
+        elif(id == self.channels.auto_threadable.DESKTOPS):
             return "Desktop"
         else:
             raise RuntimeError("[ERROR(cogs/automatic_threads.py - thread_channel)] Ha ocurrido un error al intentar detectar el prefijo para el hilo. (Revisar casos del condicional)")
@@ -76,7 +91,7 @@ class AutomaticThreads(commands.Cog):
                 "Si continúas enviando mensajes invalidos repetidamente, "
                 "podrías recibir un timeout automático."
             ),
-            color=ModerationColors.PRIVATE_MESSAGE,
+            color=self.colors.moderation.PRIVATE_MESSAGE,
             timestamp=datetime.now()
         )
         dm_embed.set_author(name=guild.name,icon_url=guild.icon.url if guild.icon else None)
@@ -99,11 +114,15 @@ class AutomaticThreads(commands.Cog):
         if not isinstance(channel, discord.TextChannel) or not isinstance(member, discord.Member) or not isinstance(guild, discord.Guild):
             return 
 
-        log_channel = guild.get_channel(int(COMMAND_CHANNEL_ID))
+        log_channel = guild.get_channel(self.channels.staff.COMMAND_LOGS)
 
         # Evitar warnings de pylance
         if not isinstance(log_channel, discord.TextChannel):
-            print("NOT A LOG TEXT CHANNEL")
+            logger.critical("El canal de logs, no es del tipo TextChannel")
+            return
+        
+        if self.bot.user is None:
+            logger.critical("No se pudo obtener el client del bot.")
             return
 
         log_embed = discord.Embed(
@@ -113,7 +132,7 @@ class AutomaticThreads(commands.Cog):
                 f"**Moderador/a:** {self.bot.user.mention}\n"
                 f"**Hasta:** <t:{int(until.timestamp())}:f>"),
             timestamp=datetime.now(),
-            color=ModerationColors.MUTE,
+            color=self.colors.moderation.MUTE,
         )
         log_embed.add_field(name="Aislado", value=f"\u2800\u2800`{member.name} [{member.id}]`", inline=False)
         log_embed.set_author(name=f"{guild.name}", icon_url=guild.icon.url if guild.icon else None)
@@ -173,7 +192,7 @@ class AutomaticThreads(commands.Cog):
             return
         
         # Reviso si el ID del canal NO coincide con algún ID de los canales donde se deben crear los hilos
-        if not message.channel.id in self.channels:
+        if not message.channel.id in self.enabled_threadable_channels:
             return
 
         if message.author.bot:

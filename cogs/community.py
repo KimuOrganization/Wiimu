@@ -6,9 +6,11 @@ from discord import app_commands
 from discord.ext import commands
 import time
 from datetime import datetime, timedelta
-from core.config import GUILD_ID, LOG_CHANNEL_ID
+from core.bot import Bot
+from core.config import GUILD_ID
+from core.config_sections.channels import Channels
+from core.config_sections.colors import Colors
 from utils.community import contains_banned_word
-from utils.colors import LogColors
 from typing import Union
 
 VOTE_TIMEOUT = 300
@@ -102,7 +104,7 @@ class VoteView(discord.ui.View):
 
 
 class Community(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: Bot):
         self.bot = bot
         self.sessions: dict[int, VoteSession] = {}
         self.last_vote: dict[int, datetime] = {}
@@ -111,6 +113,14 @@ class Community(commands.Cog):
         self.nickname_change_cooldown : float = timedelta(minutes=3).total_seconds()
         self.nickname_change_last_user : Union[int, None] = None
         self.nickname_change_last_use : float = 0.00
+
+    @property
+    def colors(self) -> Colors:
+        return self.bot.config.colors # type: ignore
+
+    @property
+    def channels(self) -> Channels:
+        return self.bot.config.channels # type: ignore
 
     def required_votes(self, channel: discord.VoiceChannel) -> int:
         members = len([
@@ -336,14 +346,14 @@ class Community(commands.Cog):
         log_embed = discord.Embed(
             title="Intento establecer un estado en VC",
             description=f"{member.mention} intento cambiar el estado de {channel.mention}",
-            color=LogColors.PROFILE_NAME,
+            color=self.colors.logs.PROFILE_NAME,
             timestamp=datetime.now()
         )
         log_embed.set_author(name=member.name, icon_url=member.display_avatar.url)
         log_embed.set_footer(text="ID: "+str(member.id))
         log_embed.add_field(name="Estado", value=f"```{estado}```",inline=False)
 
-        log_channel = interaction.guild.get_channel(int(LOG_CHANNEL_ID))
+        log_channel = interaction.guild.get_channel(self.channels.staff.LOGS)
 
         # Evitar warnings pylance
         if not isinstance(log_channel, discord.TextChannel):

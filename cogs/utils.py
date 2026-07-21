@@ -5,6 +5,7 @@ from utils.help_data import HELP_COMMANDS, OPTIONAL_ARGUMENTS_INFO
 from core.config import GUILD_ID
 from typing import Union
 
+# TODO: añadir comandos faltantes
 class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

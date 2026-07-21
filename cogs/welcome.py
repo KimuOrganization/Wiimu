@@ -7,8 +7,6 @@ import asyncio
 logger = logging.getLogger(__name__)
 
 from core.config import (
-    WELCOME_CHANNEL_ID,
-    WELCOME_ROLE_ID,
     WELCOME_IMAGE_PATH,
     WELCOME_CANVAS
 )
@@ -19,16 +17,24 @@ class Welcome(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot : Bot = bot
 
+    @property
+    def channels(self):
+        return self.bot.config.channels # type: ignore
+    
+    @property
+    def roles(self):
+        return self.bot.config.roles # type: ignore
+
     async def send_welcome(self, member: discord.Member):
         guild = member.guild
         # Canal de bienvenida
-        channel = guild.get_channel(int(WELCOME_CHANNEL_ID))
+        channel = guild.get_channel(self.channels.common.WELCOME)
         # Evitar warnings de pylance
         if not channel or not isinstance(channel, discord.TextChannel):
             logger.critical(
                 "No se encontró el canal de bienvenida configurado (ID: %s) en el servidor '%s' (%s). "
-                "Revisar variable de entorno WELCOME_CHANNEL_ID.",
-                WELCOME_CHANNEL_ID,
+                "Revisar clave CHANNELS_ID.COMMON.WELCOME en la DB.",
+                self.channels.common.WELCOME,
                 guild.name,
                 guild.id
             )
@@ -76,12 +82,12 @@ class Welcome(commands.Cog):
         guild = member.guild
 
         # Asignar rol
-        role = guild.get_role(int(WELCOME_ROLE_ID))
+        role = guild.get_role(self.roles.common.WELCOME)
         if role is None:
             logger.critical(
                 "No se encontró el rol de bienvenida configurado (ID: %s) en el servidor '%s' (%s)."
-                "Revisar la variable de entorno WELCOME_ROLE_ID.",
-                WELCOME_ROLE_ID,
+                "Revisar la clave ROLES_ID.COMMON.WELCOME en la db.",
+                self.roles.common.WELCOME,
                 guild.name,
                 guild.id
             )
@@ -94,8 +100,8 @@ class Welcome(commands.Cog):
                 "Permisos insuficientes al asignar el rol '%s' (%s) en el servidor '%s' (%s).",
                 role.name,
                 role.id,
-                role.name,
-                role.id
+                guild.name,
+                guild.id
             )
         except discord.HTTPException:
             logger.exception(

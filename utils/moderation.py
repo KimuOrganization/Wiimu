@@ -1,8 +1,9 @@
 import discord
-from core.config import COMMAND_CHANNEL_ID,LOG_CHANNEL_ID,STAFF_ROLE_ID
 from datetime import datetime, timedelta, timezone
 from typing import Union, Optional, Tuple, Sequence
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 async def get_actor_for_action(guild: discord.Guild,target_id: int, action: discord.AuditLogAction) -> Union[discord.User, discord.Member, None]:
     async for entry in guild.audit_logs(limit=1, action=action):
@@ -30,9 +31,10 @@ async def get_actor_for_moderation_action(guild: discord.Guild, target_id: int, 
 async def send_moderation_log(
     guild:discord.Guild,
     embed: discord.Embed,
+    command_log_channel_id : int,
     message: Union[str, None] = None
 ):
-    channel= guild.get_channel(int(COMMAND_CHANNEL_ID))
+    channel= guild.get_channel(command_log_channel_id)
 
     if (not isinstance(channel, discord.TextChannel)):
         raise RuntimeError(
@@ -41,12 +43,12 @@ async def send_moderation_log(
     
     await channel.send(f"{message if message else ''}",embed=embed)
 
-async def send_common_log(guild:discord.Guild, embed: discord.Embed, message: Union[str, None] = None, files: Sequence[discord.File] = []):
-    channel= guild.get_channel(int(LOG_CHANNEL_ID))
+async def send_common_log(guild:discord.Guild, embed: discord.Embed,log_channel_id:int, message: Union[str, None] = None, files: Sequence[discord.File] = []):
+    channel= guild.get_channel(int(log_channel_id))
 
     if (not isinstance(channel, discord.TextChannel)):
         raise RuntimeError(
-            "[ERROR(utils/logs.py - send_common_log)]: El canal de logs no es del tipo 'TextChannel'. Revisar variable de entorno 'LOG_CHANNEL_ID'."
+            "[ERROR(utils/moderation.py - send_common_log)]: El canal de logs no es del tipo 'TextChannel'. Revisar ID del canal de logs en la base de datos."
         )
     
     await channel.send(f"{message if message else ''}", embed=embed, files=files)
@@ -59,13 +61,14 @@ async def send_moderation_dm(
     description: str,
     color: int,
     mandar_dm: bool,
+    staff_role_id:int,
     message: Union[str,None] = None
     ) -> Union[discord.Message, None]:
     if not mandar_dm:
         return None
     
 
-    staff_role : Union[discord.Role, None] = guild.get_role(int(STAFF_ROLE_ID))
+    staff_role : Union[discord.Role, None] = guild.get_role(staff_role_id)
     staff_members : Union[list[str],None] = None
     staff_mention : Union[str,None] = None
     if staff_role:
