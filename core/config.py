@@ -35,5 +35,5 @@ BOT_TOKEN = get_env("BOT_TOKEN")
 APP_ID = get_env("APPLICATION_ID")
 GUILD_ID = get_env("GUILD_ID")
 DATABASE_PATH = get_env("DATABASE_PATH")
-WELCOME_IMAGE_PATH = "assets\\welcome.jpg"
+WELCOME_IMAGE_PATH = "assets/welcome.jpg"
 WELCOME_CANVAS = {"width":700, "height":247}

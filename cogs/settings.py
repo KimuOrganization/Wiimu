@@ -129,8 +129,8 @@ class Settings(commands.Cog):
         try:
             current = self.cfg.get(key)
             if not isinstance(current, list):
-                raise TypeError(
-                    "La configuración no es una lista JSON"
+                return await interaction.response.send_message(
+                    "La configuración no es una lista JSON",ephemeral=True
                 )
             
             item = self._parse_list_item(value)
