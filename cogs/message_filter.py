@@ -66,7 +66,7 @@ class MessageFilter(commands.Cog):
             dm_embed.set_author(name=f"{guild.name}", icon_url=guild.icon.url if guild.icon else None)
             dm_embed.set_footer(text="Mensaje automatico")
 
-            await member.send(embed=dm_embed)
+            return await member.send(embed=dm_embed)
 
     async def handle_discord_invites(self, message: discord.Message):
         match = INVITE_REGEX.search(message.content)
@@ -105,10 +105,26 @@ class MessageFilter(commands.Cog):
         try:
             await message.delete()
         except discord.Forbidden:
+            # En caso de que no se borre la invitación, avisar al STAFF
+            staff_role = guild.get_role(self.roles.staff.MODERATORS)
+            if not staff_role:
+                return
+            await message.reply(
+                staff_role.mention, silent=False
+            )
             return
         
         reason="Se detecto una invitación a un servidor de discord. (spam)"
 
+        dm_sended = True
+        dm_reference = None
+        # TODO: Implementar logging
+        try:
+            dm_reference = await self.log_filter(guild,member,message,reason)
+        except:
+            dm_sended = False
+            pass
+        
         try:
             await guild.ban(
                 member,
@@ -116,9 +132,12 @@ class MessageFilter(commands.Cog):
                 delete_message_days=1
             )
         except discord.Forbidden:
+            # Borrar el mensaje privado porque no se pudo realizar la sanción
+            if dm_sended and dm_reference is not None:
+                await dm_reference.delete()
             return
         
-        await self.log_filter(guild,member,message,reason)
+       
 
     async def handle_banned_phrases(self, message:discord.Message):
         if not isinstance(message.author, discord.Member):

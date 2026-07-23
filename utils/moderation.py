@@ -126,7 +126,7 @@ async def send_moderation_log(
     await channel.send(f"{message if message else ''}",embed=embed)
 
 async def send_common_log(guild:discord.Guild, embed: discord.Embed,log_channel_id:int, message: Union[str, None] = None, files: Sequence[discord.File] = []):
-    channel= guild.get_channel(int(log_channel_id))
+    channel= guild.get_channel(log_channel_id)
 
     if (not isinstance(channel, discord.TextChannel)):
         raise RuntimeError(
