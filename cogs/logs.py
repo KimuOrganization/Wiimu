@@ -1,4 +1,6 @@
+from dis import disco
 from tkinter import N
+from venv import logger
 import discord
 from discord.ext import commands
 from datetime import datetime, timezone, timedelta
@@ -81,7 +83,6 @@ class Logs(commands.Cog):
     async def on_member_remove(self, member: discord.Member):
         actor, reason = await get_actor_for_moderation_action(member.guild, member.id, discord.AuditLogAction.kick)
         if self.bot.config is None:
-            
             return
 
 
@@ -126,6 +127,49 @@ class Logs(commands.Cog):
             )
         
         await send_common_log(guild=member.guild, embed=embed, log_channel_id=self.log_channel_id)
+
+    async def _backup_message_media(
+            self,
+            message: discord.Message
+    ):
+        if (message.guild is None):
+            return
+        media_vault = message.guild.get_channel(self.channels.staff.MEDIA_VAULT)
+        if (not isinstance(media_vault, discord.TextChannel)):
+            return
+
+        if isinstance(media_vault, discord.TextChannel):
+            files_backup: list[discord.File] = []
+            for attachment in message.attachments:
+                try:
+                    files_backup.append(await attachment.to_file())
+                except discord.HTTPException:
+                    logger.warning(
+                        "No se pudo descargar el attachment '%s' (%s) [%s] del mensaje %s.",
+                        attachment.filename,
+                        attachment.url,
+                        attachment.content_type,
+                        message.id
+                    )
+            if files_backup:
+                created_ts = int(message.created_at.timestamp())
+                deleted_ts = int(datetime.now(timezone.utc).timestamp())
+                content = (
+                    f"**Usuario:** `{message.author} [{message.author.id}]` ({message.author.mention})\n"
+                    f"**Canal:** `{message.channel.name} [{message.channel.id}]` ({message.channel.mention})\n" # type:ignore
+                    f"**Fecha de envío:** <t:{created_ts}:F> (<t:{created_ts}:R>)\n"
+                    f"**Fecha de borrado:** <t:{deleted_ts}:F> (<t:{deleted_ts}:R>)\n"
+                )
+
+                if message.content:
+                    content+= f"\n**Texto:**\n```{message.content}```"
+                if message.reference:
+                    content+= f"\n**En respuesta a:** [{message.reference.message_id}]({message.reference.jump_url})"
+
+                await media_vault.send(
+                    content=content,
+                    files=files_backup
+                )
 
     #region on_message_delete
     @commands.Cog.listener()
@@ -200,6 +244,9 @@ class Logs(commands.Cog):
                     pass
             
             return await message.channel.send(f"### :exclamation: Se intento borrar este log, re-subida automatica :exclamation:{additional_line}",embeds=message.embeds, files=log_files)
+
+        if message.attachments:
+            await self._backup_message_media(message)
 
         await send_common_log(guild=message.guild, embed=embed, files=files, log_channel_id=self.log_channel_id)
 

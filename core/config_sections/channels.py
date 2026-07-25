@@ -16,6 +16,7 @@ class StaffChannels(ConfigSection):
     PREFIX = "CHANNELS_ID.STAFF"
 
     LOGS: int
+    MEDIA_VAULT: int
     COMMAND_LOGS: int
 
     # Opcionales para el funcionamiento del bot

@@ -164,6 +164,9 @@ class ConfigManager:
 
         return config.value
 
+    def exists(self, key:str) -> bool:
+        return key in self._configs
+
     @staticmethod
     def _deserialize(config_type: ConfigType, value:str):
         match config_type:
