@@ -1,7 +1,8 @@
 from __future__ import annotations
 import json
-from typing import Any, Union
+from typing import Any, Literal, Never
 from enum import StrEnum
+import re
 
 import discord
 from discord.ext import commands
@@ -180,11 +181,7 @@ class Settings(commands.Cog):
             return await interaction.response.send_message(
                 "Ha ocurrido un error :( revisar logs.",
                 ephemeral=True
-            )
-
-
-        
-        
+            )           
             
     #region Autocomplete funcs
     async def autocomplete_all_keys(
@@ -243,7 +240,35 @@ class Settings(commands.Cog):
                 )
 
         return choices [:25]    
-    
+
+    # Utility function to expose the sections prefix and avoid the use of list with static strings
+    def _get_sections(self) -> list:
+        if self.cfg is None:
+            return []
+
+        sections = (
+            self.cfg.channels.staff.PREFIX,
+            self.cfg.channels.auto_threadable.PREFIX,
+            self.cfg.channels.common.PREFIX,
+            self.cfg.colors.logs.PREFIX,
+            self.cfg.colors.moderation.PREFIX,
+            self.cfg.roles.common.PREFIX,
+            self.cfg.roles.staff.PREFIX,
+            self.cfg.users.bots.PREFIX,
+        )
+
+        # Devuelve la tupla con las secciones ordenadas y sin repetir elementos
+        return sorted(tuple(set(sections)))
+
+    async def autocomplete_sections(
+            self, interaction:discord.Interaction, current:str
+    ) -> list[app_commands.Choice[str]]:
+        return [
+            app_commands.Choice(name=section, value=section)
+            for section in self._get_sections()
+            if current in section
+        ][:25]
+
     #region Command group
     config_group = app_commands.Group(
         name="config",
@@ -378,7 +403,7 @@ class Settings(commands.Cog):
     #region Add Item config command
     @config_group.command(name="add_item", description="Agrega un elemento a una configuración del tipo Lista/JSON")
     @app_commands.autocomplete(key=autocomplete_list_keys)
-    async def cmd_config_add(
+    async def cmd_config_add_item(
         self, interaction: discord.Interaction, key: str, value: str
         ) -> discord.InteractionCallbackResponse[discord.Client]:
         return await self._modify_json_list(
@@ -400,6 +425,58 @@ class Settings(commands.Cog):
             value,
             JsonListOperation.REMOVE
         )
+
+    _KEY_REGEX = re.compile(r"^[A-Z][A-Z0-9_]*$")
+    @config_group.command(name="db_add", description="Agrega un elemento a la db")
+    @app_commands.autocomplete(section=autocomplete_sections)
+    async def cmd_config_add(
+        self, interaction: discord.Interaction, section:str, name:str, value:str, type: ConfigType,
+    ):
+        if self.cfg is None:
+            return await self._log_config_manager_not_exists(interaction)
+
+        name = name.strip().upper()
+        key = f"{section}.{name}"
+
+        if self.cfg.exists(key):
+            return await interaction.response.send_message(
+                "Ya existe una configuración con esa key. Si deseas modificarla utiliza `/config edit`.", ephemeral=True
+            )
+        
+        if not self._KEY_REGEX.fullmatch(key):
+            return await interaction.response.send_message(
+                "El nombre de la configuración solo puede contener letras mayúsculas, números y '_'."
+            )
+
+        try:
+            parsed = self.cfg._deserialize(type, value)
+
+            self.cfg._validate_schema(key,parsed)
+
+            if type == ConfigType.JSON:
+                value = json.dumps(parsed, separators=(",",":"))
+            else:
+                value = str(parsed)
+
+            await self.cfg.set(
+                key=key,
+                type=type,
+                value=value
+            )
+
+            await interaction.response.send_message(
+                f"La configuración `{key}`, con el valor `{value}`, de tipo `{type}`, fue agregada con exito.",
+                ephemeral=True
+            )
+        except Exception:
+            logger.exception(
+                "Excepción no controlada al agregar una configuración nueva en la db."
+            )
+            return await interaction.response.send_message(
+                "Ha ocurrido un error :( revisar logs.",
+                ephemeral=True
+            )
+        
         
 async def setup(bot: Bot):
     await bot.add_cog(Settings(bot))
