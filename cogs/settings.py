@@ -443,7 +443,7 @@ class Settings(commands.Cog):
                 "Ya existe una configuración con esa key. Si deseas modificarla utiliza `/config edit`.", ephemeral=True
             )
         
-        if not self._KEY_REGEX.fullmatch(key):
+        if not self._KEY_REGEX.fullmatch(name):
             return await interaction.response.send_message(
                 "El nombre de la configuración solo puede contener letras mayúsculas, números y '_'."
             )
