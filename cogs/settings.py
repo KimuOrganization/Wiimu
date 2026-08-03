@@ -254,6 +254,7 @@ class Settings(commands.Cog):
             self.cfg.colors.moderation.PREFIX,
             self.cfg.roles.common.PREFIX,
             self.cfg.roles.staff.PREFIX,
+            self.cfg.roles.integration.PREFIX,
             self.cfg.users.bots.PREFIX,
         )
 
