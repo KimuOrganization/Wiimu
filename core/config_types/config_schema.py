@@ -34,6 +34,7 @@ CONFIG_SCHEMA_RULES : list[SchemaRule] = [
     SchemaRule("USERS_ID.BOTS.MUSIC", is_list_of_int),
 
     # Roles
+    SchemaRule("ROLES_ID.INTEGRATION.*", is_list_of_int),
     SchemaRule("ROLES_ID.*", is_discord_id),
 
     # Channels
