@@ -2,7 +2,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 import discord
-from discord import app_commands
+from discord import VoiceChannel, app_commands
 from discord.ext import commands
 import time
 from datetime import datetime, timedelta
@@ -12,6 +12,9 @@ from core.config_sections.channels import Channels
 from core.config_sections.colors import Colors
 from utils.community import contains_banned_word
 from typing import Union
+
+import logging
+logger = logging.getLogger(__name__)
 
 VOTE_TIMEOUT = 300
 VOTE_COOLDOWN = timedelta(minutes=10)
@@ -496,6 +499,51 @@ class Community(commands.Cog):
                 "Ocurrió un error al cambiar tu nickname.",
                 ephemeral=True
             )
+
+    @commands.Cog.listener("on_voice_state_update")
+    async def community_on_voice_state_update(
+        self,
+        member: discord.Member,
+        before: discord.VoiceState,
+        after: discord.VoiceState
+    ):
+        if after.channel is None:
+            return
+
+        # Ignorar cambios de estados
+        if before.channel == after.channel:
+            return
+
+        channel = after.channel
+
+        # Evitar
+        if len(channel.members) != 1:
+            return
+
+        # Evitar que el bot cambie el estado de canales al entrar solo (raro)
+        if member.bot:
+            return
+
+        # Evitar errores de pylance
+        if not isinstance(channel,VoiceChannel):
+            return
+
+        try:
+            await channel.edit(
+                status="/cambiar_estado_vc",
+                reason="Cambio de estado automático en el VC por activación"
+            )
+        except discord.Forbidden:
+            logger.warning(
+                "No tengo permisos para cambiar el estado del VC '%s' (%s).",
+                channel.name, channel.id
+            )
+        except discord.HTTPException:
+            logger.exception(
+                "Discord devolvió un error al cambiar el estado del VC '%s' (%s)",
+                channel.name, channel.id
+            )
+         
 
 async def setup(bot):
     await bot.add_cog(Community(bot))

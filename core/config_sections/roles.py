@@ -19,7 +19,7 @@ class CommonRoles(ConfigSection):
         return self._get(name)
 
 class IntegrationRoles(ConfigSection):
-    """IDs de los roles de integración (ej: miembros yt, miembros kofi, boosters, etc). Tener en cuenta que generalmente van a ser listas de IDs por el hecho de que una integración puede tener mas de un rol."""
+    """IDs de los roles de integración (ej: miembros yt, miembros kofi, boosters, etc). Tener en cuenta que van a ser listas de IDs por el hecho de que una integración puede tener mas de un rol."""
     PREFIX = "ROLES_ID.INTEGRATION"
 
     KOFI_MEMBER: list[int]
