@@ -9,7 +9,7 @@ DATABASE_PATH=core/Wiimu_Production_Database.sqlite3
 ```
 
 > [!NOTE]
-> Ninguna variable de entorno es opcional. Están las justas y necesarias para no necesitar tener nada en memoria y tampoco tener la necesidad de persistir cosas en una base de datos.
+> Ninguna variable de entorno es opcional.
 
 ## Manual
 
