@@ -256,6 +256,7 @@ class Settings(commands.Cog):
             self.cfg.roles.staff.PREFIX,
             self.cfg.roles.integration.PREFIX,
             self.cfg.users.bots.PREFIX,
+            self.cfg.users.multi_accounts.PREFIX
         )
 
         # Devuelve la tupla con las secciones ordenadas y sin repetir elementos
