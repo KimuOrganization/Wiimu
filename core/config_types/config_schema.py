@@ -23,6 +23,21 @@ def is_discord_id(value: Any) -> bool:
         and len(str(value)) >= 17
     )
 
+def is_multi_account_groups(value: object) -> bool:
+    if not isinstance(value,list):
+        return False
+
+    for group in value:
+        if not isinstance(group, list):
+            return False
+
+        if not group:
+            return False
+
+        if not all(isinstance(user_id, int) for user_id in group):
+            return False
+    return True
+
 @dataclass(slots=True)
 class SchemaRule:
     pattern:str
@@ -32,6 +47,7 @@ class SchemaRule:
 CONFIG_SCHEMA_RULES : list[SchemaRule] = [
     # Users
     SchemaRule("USERS_ID.BOTS.MUSIC", is_list_of_int),
+    SchemaRule("USERS_ID.MULTI_ACCOUNTS", is_multi_account_groups),
 
     # Roles
     SchemaRule("ROLES_ID.INTEGRATION.*", is_list_of_int),
