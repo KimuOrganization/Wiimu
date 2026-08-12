@@ -27,15 +27,23 @@ def is_multi_account_groups(value: object) -> bool:
     if not isinstance(value,list):
         return False
 
+    seen: set[int] = set()
+
     for group in value:
-        if not isinstance(group, list):
+        if not isinstance(group, list) or len(group) < 2:
             return False
 
         if not group:
             return False
 
-        if not all(isinstance(user_id, int) for user_id in group):
-            return False
+        for user_id in group:
+            if not isinstance(user_id,int):
+                return False
+            if user_id in seen:
+                return False
+
+            seen.add(user_id)
+        
     return True
 
 @dataclass(slots=True)

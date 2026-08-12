@@ -6,14 +6,19 @@ from core.bot import Bot
 from core.config import GUILD_ID
 from core.config_sections.channels import Channels
 from core.config_sections.colors import Colors
+from core.config_sections.users import Users
 from utils.user import resolve_user
 from utils.time import parse_duration
-from utils.moderation import send_moderation_log, send_moderation_dm
+from utils.moderation import send_moderation_log, send_moderation_dm, get_related_accounts
 from typing import Union
 
 class Moderation(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+
+    @property
+    def users(self) -> Users:
+        return self.bot.config.users # type: ignore
 
     @property
     def channels(self) -> Channels:
@@ -107,6 +112,7 @@ class Moderation(commands.Cog):
         dias_de_purga: app_commands.Range[int,0,7] = 1,
         mandar_dm: bool = True
     ):
+        banned_members = []
         await interaction.response.defer(ephemeral=True)
 
         target = await resolve_user(interaction, usuario)
@@ -133,7 +139,6 @@ class Moderation(commands.Cog):
             color=self.colors.moderation.BAN
         )
         embed.set_author(name=f"{guild.name}",icon_url=guild.icon.url if guild.icon else None)
-        embed.add_field(name="Baneado", value=f"\u2800\u2800`{target.name} [{target.id}]`", inline=False)
         embed.set_footer(text="ID: "+str(interaction.user.id))
 
         mensaje_privado = await send_moderation_dm(
@@ -144,6 +149,11 @@ class Moderation(commands.Cog):
             color=self.colors.moderation.BAN,
             staff_role_id=self.roles.staff.MODERATORS,
             mandar_dm=mandar_dm
+        )
+
+        related_accounts = get_related_accounts(
+            self.users.multi_accounts.GROUPS,
+            target.id
         )
 
         try:
@@ -164,7 +174,53 @@ class Moderation(commands.Cog):
             f"{target.mention} fue baneado.", ephemeral=True
         )
 
-        return await send_moderation_log(guild, embed, self.channels.staff.COMMAND_LOGS)
+        for account_id in related_accounts:
+            member = guild.get_member(account_id)
+            if member is None:
+                continue
+
+            current_dm = None
+            
+            try:
+                current_dm = await send_moderation_dm(
+                    guild=guild,
+                    target=member,
+                    title="Has sido banead@ del servidor",
+                    description=f"**Razón:** Multicuenta relacionada con {target} ({target.id})",
+                    color=self.colors.moderation.BAN,
+                    staff_role_id=self.roles.staff.MODERATORS,
+                    mandar_dm=mandar_dm
+                )
+            except:
+                await interaction.followup.send(
+                    f"No se pudo enviar el DM a {member.mention}, se intentara realizar el baneo de todas formas",ephemeral=True
+                )
+            try:
+                await guild.ban(
+                    member,
+                    reason=f"Multicuenta relacionada con el baneo de {target} ({target.id})",
+                    delete_message_days=dias_de_purga if borrar_mensajes else 0,
+                )
+
+                await interaction.followup.send(
+                    f"{member.mention} fue baneado (Multicuenta).", ephemeral=True
+                )
+                banned_members.append(f"\u2800\u2800`{target.name} [{target.id}]")
+
+            except:
+                if current_dm:
+                    await current_dm.delete()
+
+                await interaction.followup.send(
+                    f"No se pudo banear a {target.mention}. Posiblemente no tengo los permisos suficientes."
+                )
+        embed.add_field(name="Baneado", value="\n".join(banned_members), inline=False)
+        await send_moderation_log(guild, embed, self.channels.staff.COMMAND_LOGS)
+
+
+            
+
+
 
     #region kick
     @app_commands.guilds(int(GUILD_ID))
