@@ -27,15 +27,23 @@ def is_multi_account_groups(value: object) -> bool:
     if not isinstance(value,list):
         return False
 
+    seen: set[int] = set()
+
     for group in value:
-        if not isinstance(group, list):
+        if not isinstance(group, list) or len(group) < 2:
             return False
 
         if not group:
             return False
 
-        if not all(isinstance(user_id, int) for user_id in group):
-            return False
+        for user_id in group:
+            if not is_discord_id(user_id):
+                return False
+            if user_id in seen:
+                return False
+
+            seen.add(user_id)
+        
     return True
 
 @dataclass(slots=True)
@@ -47,7 +55,7 @@ class SchemaRule:
 CONFIG_SCHEMA_RULES : list[SchemaRule] = [
     # Users
     SchemaRule("USERS_ID.BOTS.MUSIC", is_list_of_int),
-    SchemaRule("USERS_ID.MULTI_ACCOUNTS", is_multi_account_groups),
+    SchemaRule("USERS_ID.MULTI_ACCOUNTS.GROUPS", is_multi_account_groups),
 
     # Roles
     SchemaRule("ROLES_ID.INTEGRATION.*", is_list_of_int),

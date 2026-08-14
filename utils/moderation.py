@@ -1,6 +1,6 @@
 import discord
-from datetime import datetime, timedelta, timezone
-from typing import Union, Optional, Tuple, Sequence
+from datetime import datetime
+from typing import Union, Optional, Sequence
 import asyncio
 import logging
 logger = logging.getLogger(__name__)
@@ -181,3 +181,22 @@ async def send_moderation_dm(
         return await target.send(f"{message if message else ''}",embed=dm_embed, silent=True)
     except:
         return None # DMs Cerrados
+
+
+def get_related_accounts(
+        groups: Sequence[Sequence[int]],
+        user_id: int
+    )-> list[int]:
+    """
+    Devuelve todas las cuentas asociadas a un usuario, excluyendo al mismo indicado.
+
+    Si el usuario no tiene cuentas asociadas, devuelve una lista vacía.     
+    """
+    for group in groups:
+        if user_id in group:
+            return [
+                account_id
+                for account_id in group
+                if account_id != user_id
+            ]
+    return []

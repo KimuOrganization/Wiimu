@@ -3,9 +3,9 @@ from discord.ext import commands
 from datetime import timedelta
 from core.bot import Bot
 from core.config_sections.channels import Channels
+from core.config_sections.colors import Colors
 from core.config_sections.roles import Roles
 from utils.message import INVITE_REGEX, BANNED_PHRASES
-from utils.colors import ModerationColors
 from datetime import datetime
 from utils.time import format_duration
 from typing import Union
@@ -18,6 +18,10 @@ PARSED_DURATION = format_duration(MUTE_DURATION)
 class MessageFilter(commands.Cog):
     def __init__(self, bot: Bot) -> None:
         self.bot = bot
+
+    @property
+    def colors(self) -> Colors:
+        return self.bot.config.colors # type:ignore
 
     @property
     def channels(self) -> Channels:
@@ -43,7 +47,7 @@ class MessageFilter(commands.Cog):
                     f"Contenido del mensaje:\n`{message.content}`"
                 ),
                 timestamp=datetime.now(),
-                color=ModerationColors.FILTER_MUTE
+                color=self.colors.moderation.BAN if sanctionWithBan else self.colors.moderation.MUTE
             )
             embed.set_author(name=guild.name,icon_url=guild.icon.url if guild.icon else None)
             embed.set_footer(text=f"ID: {member.id}")
