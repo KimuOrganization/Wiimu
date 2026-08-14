@@ -1,6 +1,7 @@
 from dis import disco
 from tkinter import N
 from venv import logger
+from weakref import ref
 import discord
 from discord.ext import commands
 from datetime import datetime, timezone, timedelta
@@ -194,10 +195,19 @@ class Logs(commands.Cog):
             for attachment in message.attachments:
                 message_attachments += "\n\u2800\u2800"
                 message_attachments += f"{attachment.url}"
+
+        reference_text = ""
+
+        if message.reference and message.reference.message_id:
+            reference_text = (
+                f"**En respuesta a:** "
+                f"[{message.reference.message_id}]({message.reference.jump_url})\n"
+            )
         
         # Mensaje default en caso de que mida <= 4000 caracteres
         text :str = (
             f"**Canal:** {message.channel.mention}\n"
+            f"{reference_text}"
             f"```{message_content}```\n"
             f"**Attachments:**{message_attachments}"
         )
@@ -265,11 +275,28 @@ class Logs(commands.Cog):
         if before.author.bot:
             return
 
+        message_url = before.jump_url or after.jump_url
+
+        reference_text = ""
+
+        reference = before.reference or after.reference
+
+        if reference and reference.message_id:
+            reference_text = (
+                f"**En respuesta a:** "
+                f"[{reference.message_id}]({reference.jump_url})\n"
+            )
+
+
         embed = discord.Embed(
             title="Mensaje editado",
             color=self.colors.logs.MESSAGE_EDIT,
             timestamp=datetime.now(),
-            description=f"**Canal:** {before.channel.mention}\n"
+            description=(
+                f"**Canal:** {before.channel.mention}\n"
+                f"**Mensaje:** [{before.id}]({message_url})\n"
+                f"{reference_text}"
+                )
         )
 
         # Declaraciones
