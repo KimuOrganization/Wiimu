@@ -12,6 +12,7 @@ from core.config_sections.channels import Channels
 from core.config_sections.colors import Colors
 from core.config_sections.roles import Roles
 from core.config_sections.users import Users
+from utils.message import get_message_context_url
 from utils.time import format_duration
 from utils.permissions import diff_permission, diff_overwrites
 from utils.moderation import get_actor_for_action, get_actor_for_moderation_action, send_common_log, send_moderation_log
@@ -152,12 +153,20 @@ class Logs(commands.Cog):
                         attachment.content_type,
                         message.id
                     )
+            context_url = await get_message_context_url(message)
+            context_text = ""
+            if context_url:
+                context_text = (
+                    f"**Contexto:** [Ir al mensaje cercano]({context_url})\n"
+                )
+            
             if files_backup:
                 created_ts = int(message.created_at.timestamp())
                 deleted_ts = int(datetime.now(timezone.utc).timestamp())
                 content = (
                     f"**Usuario:** `{message.author} [{message.author.id}]` ({message.author.mention})\n"
                     f"**Canal:** `{message.channel.name} [{message.channel.id}]` ({message.channel.mention})\n" # type:ignore
+                    f"{context_text}"
                     f"**Fecha de envío:** <t:{created_ts}:F> (<t:{created_ts}:R>)\n"
                     f"**Fecha de borrado:** <t:{deleted_ts}:F> (<t:{deleted_ts}:R>)\n"
                 )
@@ -171,6 +180,7 @@ class Logs(commands.Cog):
                     content=content,
                     files=files_backup
                 )
+
 
     #region on_message_delete
     @commands.Cog.listener()
@@ -196,8 +206,15 @@ class Logs(commands.Cog):
                 message_attachments += "\n\u2800\u2800"
                 message_attachments += f"{attachment.url}"
 
-        reference_text = ""
+        context_url = await get_message_context_url(message)
+        context_text = ""
+        if context_url:
+            context_text = (
+                f"**Contexto:** [Ir al mensaje cercano]({context_url})\n"
+            )
 
+
+        reference_text = ""
         if message.reference and message.reference.message_id:
             reference_text = (
                 f"**En respuesta a:** "
@@ -208,6 +225,7 @@ class Logs(commands.Cog):
         text :str = (
             f"**Canal:** {message.channel.mention}\n"
             f"{reference_text}"
+            f"{context_text}"
             f"```{message_content}```\n"
             f"**Attachments:**{message_attachments}"
         )
@@ -220,6 +238,8 @@ class Logs(commands.Cog):
             # Dejo solo el canal y los attachments en el texto de la descripción
             text = (
                 f"**Canal:** {message.channel.mention}\n"
+                f"{reference_text}"
+                f"{context_text}"
                 "El mensaje es demasiado largo. Se adjunto un archivo con el contenido completo.\n"
                 f"**Attachments:**{message_attachments}"
                 )

@@ -60,3 +60,22 @@ def has_threadable_embed(message: discord.Message) -> bool:
         return True
     
     return False
+
+async def get_message_context_url(
+        message:discord.Message
+) -> str | None:
+    channel = message.channel
+
+    if not isinstance(channel, discord.TextChannel):
+        return None
+
+    try:
+        async for previous_message in channel.history(
+            limit=1,
+            before=message.created_at
+        ):
+            return previous_message.jump_url
+    except discord.HTTPException:
+        return None
+
+    return None
