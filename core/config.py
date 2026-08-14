@@ -4,7 +4,7 @@ import discord
 from typing import Set
 
 # Funcionalidades del bot a habilitar
-BOT_FEATURES = ("dev","settings","welcome","moderation","logs","automatic_threads","message_filter","utils","honeypot","community", "word_blacklist")
+BOT_FEATURES = ("dev","settings","welcome","moderation","logs","automatic_threads","message_filter","multi_accounts","utils","honeypot","community", "word_blacklist")
 BOT_ENABLED_FEATURES : Set[str] = set(BOT_FEATURES)
 BOT_DISABLED_FEATURES : Set[str] = set()
 
