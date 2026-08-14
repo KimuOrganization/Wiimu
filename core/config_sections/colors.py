@@ -30,7 +30,7 @@ class LogColors(ConfigSection):
     SERVER_LEAVE: int
 
     # Voice channel events section
-    VOICE_JON: int
+    VOICE_JOIN: int
     VOICE_LEAVE: int
     VOICE_CHANGE: int
 

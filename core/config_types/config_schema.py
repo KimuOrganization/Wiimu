@@ -37,7 +37,7 @@ def is_multi_account_groups(value: object) -> bool:
             return False
 
         for user_id in group:
-            if not isinstance(user_id,int):
+            if not is_discord_id(user_id):
                 return False
             if user_id in seen:
                 return False
@@ -55,7 +55,7 @@ class SchemaRule:
 CONFIG_SCHEMA_RULES : list[SchemaRule] = [
     # Users
     SchemaRule("USERS_ID.BOTS.MUSIC", is_list_of_int),
-    SchemaRule("USERS_ID.MULTI_ACCOUNTS", is_multi_account_groups),
+    SchemaRule("USERS_ID.MULTI_ACCOUNTS.GROUPS", is_multi_account_groups),
 
     # Roles
     SchemaRule("ROLES_ID.INTEGRATION.*", is_list_of_int),

@@ -205,7 +205,7 @@ class Moderation(commands.Cog):
                 await interaction.followup.send(
                     f"{member.mention} fue baneado (Multicuenta).", ephemeral=True
                 )
-                banned_members.append(f"\u2800\u2800`{target.name} [{target.id}]")
+                banned_members.append(f"\u2800\u2800`{member.name} [{member.id}]")
 
             except:
                 if current_dm:
@@ -216,10 +216,6 @@ class Moderation(commands.Cog):
                 )
         embed.add_field(name="Baneado", value="\n".join(banned_members), inline=False)
         await send_moderation_log(guild, embed, self.channels.staff.COMMAND_LOGS)
-
-
-            
-
 
 
     #region kick
