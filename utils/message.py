@@ -66,9 +66,6 @@ async def get_message_context_url(
 ) -> str | None:
     channel = message.channel
 
-    if not isinstance(channel, discord.TextChannel):
-        return None
-
     try:
         async for previous_message in channel.history(
             limit=1,
