@@ -514,6 +514,9 @@ class Logs(commands.Cog):
         await send_common_log(guild=before.guild,embed=embed, log_channel_id=self.log_channel_id)
         
     async def _recover_missing_join_event(self, before: discord.Member, after: discord.Member, added_roles: set[discord.Role]) -> bool:
+        if before.bot or after.bot:
+            return False
+
         """Recupera casos donde Discord no dispara on_member_join."""
         if not added_roles:
             return False

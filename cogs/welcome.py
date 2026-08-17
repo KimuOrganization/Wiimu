@@ -114,6 +114,9 @@ class Welcome(commands.Cog):
 
     @commands.Cog.listener("on_member_join")
     async def welcome_on_member_join(self, member: discord.Member):
+        if (member.bot):
+            return
+        
         # Creo una tarea para que se cree la imagen y se mande el mensaje de bienvenida en "paralelo" ya que no es prioritario
         asyncio.create_task(self.send_welcome(member))
 
