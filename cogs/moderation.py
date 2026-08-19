@@ -162,6 +162,7 @@ class Moderation(commands.Cog):
                 reason=razón or 'No especificada',
                 delete_message_days=dias_de_purga if borrar_mensajes else 0,
             )
+            banned_members.append(f"\u2800\u2800`{target.name} [{target.id}]")
         except:
             if (mensaje_privado):
                 # En caso de que no se haya podido banear al usuario, eliminar el mensaje privado.
