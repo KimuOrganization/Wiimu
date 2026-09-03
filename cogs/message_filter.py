@@ -36,6 +36,19 @@ class MessageFilter(commands.Cog):
         
         duration_message = f"Duración del aislamiento: {PARSED_DURATION}\n"
 
+        staff_role : Union[discord.Role, None] = guild.get_role(self.roles.staff.MODERATORS)
+        staff_members : Union[list[str],None] = None
+        staff_mention : Union[str,None] = None
+        if staff_role:
+            staff_members = [
+                f"{member.name}: https://discord.com/users/{member.id}"
+                for member in staff_role.members
+            ]
+            staff_mention = (
+                "\n\nSi crees que esto fue un error, comunícate con alguien del staff.\n"
+                + "\n".join(staff_members)
+            )
+
         if (log_channel and isinstance(log_channel, discord.TextChannel)):
             embed = discord.Embed(
                 title=f"Filtro automatico ({'BAN' if sanctionWithBan else 'MUTE'})",
@@ -61,6 +74,8 @@ class MessageFilter(commands.Cog):
             if not sanctionWithBan:
                 description_text += f"{duration_message}"
                 description_text += f"Espere mientras el staff revisa su caso."
+
+            description_text += f"{staff_mention if staff_role and staff_members and staff_mention else ''}"
 
             dm_embed = discord.Embed(
                 title=f"Has sido {'banead@' if sanctionWithBan else 'aislad@'} en {guild.name}",
