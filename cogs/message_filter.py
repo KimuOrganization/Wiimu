@@ -9,7 +9,8 @@ from utils.message import INVITE_REGEX, BANNED_PHRASES
 from datetime import datetime
 from utils.time import format_duration
 from typing import Union
-
+import logging
+logger = logging.getLogger(__name__)
 # Cambiar para la duración de los mutes automaticos
 MUTE_DURATION = timedelta(hours=24)
 
@@ -142,6 +143,10 @@ class MessageFilter(commands.Cog):
             dm_reference = await self.log_filter(guild,member,message,reason)
         except:
             dm_sended = False
+            logger.exception("No se pudo enviar el mensaje a %s [%s]. (Baneo por invitación a un servidor de discord)",member.name,member.id)
+            cmd_channel = guild.get_channel(self.channels.staff.COMMAND_LOGS)
+            if isinstance(cmd_channel,discord.TextChannel):
+                await cmd_channel.send(f"No se pudo notificar por privado a `{member.name} [{member.id}]` ({member.mention}), sobre su baneo por mandar una invitación a otro servidor de discord.")
             pass
         
         try:
@@ -169,20 +174,23 @@ class MessageFilter(commands.Cog):
         member = message.author
         
         normalized_message = message.content.lower()
-        finded : bool = False
         
         # Busqueda de coincidencias
-        for phrase in BANNED_PHRASES:
-            if phrase.lower() in normalized_message:
-                finded = True
-
-        if not finded:
+        if not any(phrase.lower() in normalized_message for phrase in BANNED_PHRASES):
             return
         
         try:
             await message.delete()
         except discord.Forbidden:
-            return
+            logger.exception("No se pudo borrar el mensaje [%s] de %s [%s], que contiene una frase baneada. **Es probable que no tenga los permisos necesarios.**",message.id,member.name,member.id)
+            staff_role = guild.get_role(self.roles.staff.MODERATORS)
+            if staff_role:
+                await message.reply(staff_role.mention)
+        except discord.HTTPException:
+            logger.exception("No se pudo borrar el mensaje [%s] de %s [%s], que contiene una frase baneada. **Ha ocurrido un error por parte de Discord.**",message.id,member.name,member.id)
+            staff_role = guild.get_role(self.roles.staff.MODERATORS)
+            if staff_role:
+                await message.reply(staff_role.mention)
 
         reason="Se detecto una frase baneada."
 
@@ -192,6 +200,20 @@ class MessageFilter(commands.Cog):
                 reason=reason
             )
         except discord.Forbidden:
+            logger.exception("No se ha podido aislar a %s [%s], debido al uso de una frase baneada, en el mensaje [%s]. **Es probable que no tenga los permisos necesarios para aislar al usuario.**",member.name,member.id,message.id)
+            staff_role = guild.get_role(self.roles.staff.MODERATORS)
+            cmd_channel = guild.get_channel(self.channels.staff.COMMAND_LOGS)
+            if isinstance(cmd_channel,discord.TextChannel):
+                timeout_in_hours = int(MUTE_DURATION.total_seconds() / 3600)
+                await cmd_channel.send(f"{staff_role.mention if staff_role else ''}\n\nNo se ha podido aplicar el aislamiento de {timeout_in_hours} horas, a `{member.name} [{member.id}]` ({member.mention}), por utilizar una frase baneada.\nMensaje:\n```\n{message.content}\n```\n\n**Es necesario aplicar sanción de forma manual.**",)
+            return
+        except discord.HTTPException:
+            logger.exception("No se ha podido aislar a %s [%s], debido al uso de una frase baneada, en el mensaje [%s]. **Ha ocurrido un error por parte de Discord.**",member.name,member.id,message.id)
+            staff_role = guild.get_role(self.roles.staff.MODERATORS)
+            cmd_channel = guild.get_channel(self.channels.staff.COMMAND_LOGS)
+            if isinstance(cmd_channel,discord.TextChannel):
+                timeout_in_hours = int(MUTE_DURATION.total_seconds() / 3600)
+                await cmd_channel.send(f"{staff_role.mention if staff_role else ''}\n\nNo se ha podido aplicar el aislamiento de {timeout_in_hours} horas, a `{member.name} [{member.id}]` ({member.mention}), por utilizar una frase baneada.\nMensaje:\n```\n{message.content}\n```\n\n**Es necesario aplicar sanción de forma manual.**",)
             return
         
         await self.log_filter(guild,member,message,reason,False)
