@@ -5,6 +5,7 @@ from weakref import ref
 import discord
 from discord.ext import commands
 from datetime import datetime, timezone, timedelta
+from cogs.moderation import send_moderation_dm
 from core.bot import Bot
 from core.config import APP_ID
 from core.config_manager import ConfigManager
@@ -21,6 +22,9 @@ discord.abc.GuildChannel
 from io import BytesIO
 
 GuildChannel = Union[discord.TextChannel,discord.VoiceChannel,discord.StageChannel,discord.ForumChannel,discord.CategoryChannel]
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Logs(commands.Cog):
     def __init__(self, bot : Bot):
@@ -514,32 +518,32 @@ class Logs(commands.Cog):
         await send_common_log(guild=before.guild,embed=embed, log_channel_id=self.log_channel_id)
         
     async def _recover_missing_join_event(self, before: discord.Member, after: discord.Member, added_roles: set[discord.Role]) -> bool:
+        """Recupera casos donde Discord no dispara on_member_join."""
+
         if before.bot or after.bot:
             return False
 
-        """Recupera casos donde Discord no dispara on_member_join."""
         if not added_roles:
             return False
         
         if after.joined_at is None:
             return False
-        
+
         if datetime.now(timezone.utc) - after.joined_at > timedelta(minutes=5):
             return False
-        
-        if self.bot.config is None:
-            return False
 
-        welcome_role_id : int = self.bot.config.roles.common.WELCOME
+        welcome_role_id : int = self.roles.common.WELCOME
 
         if any(role.id == welcome_role_id for role in after.roles):
             return False
         
-        welcome_cog : Union[commands.Cog, None]  = self.bot.get_cog("Welcome")
+        welcome_cog : Union[commands.Cog, None]  = self.bot.get_cog("welcome")
         if welcome_cog is None:
+            logger.error("!!!No se pudo obtener el cog de bienvenida, revisar código!!!")
             return False
         
         await welcome_cog.welcome_on_member_join(after) # type: ignore (imposible de evitar)
+        logger.info("Al usuario %s [%s] no se le asigno el rol de bienvenida, solucionando...",before.name,before.id)
         return True
 
     #region on_member_update
