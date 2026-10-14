@@ -519,31 +519,36 @@ class Logs(commands.Cog):
         
     async def _recover_missing_join_event(self, before: discord.Member, after: discord.Member, added_roles: set[discord.Role]) -> bool:
         """Recupera casos donde Discord no dispara on_member_join."""
+        logger.info("[RECUPERACIÓN ROL BIENVENIDA]: Iniciando proceso...")
 
         if before.bot or after.bot:
+            logger.info("[RECUPERACIÓN ROL BIENVENIDA]: El usuario es un bot, finalizando recuperación...")
             return False
 
         if not added_roles:
-            return False
-        
-        if after.joined_at is None:
+            logger.info("[RECUPERACIÓN ROL BIENVENIDA]: El usuario no tiene roles nuevos, o la lista llego vacia...")
             return False
 
-        if datetime.now(timezone.utc) - after.joined_at > timedelta(minutes=5):
-            return False
-
+        logger.info("[RECUPERACIÓN ROL BIENVENIDA]: Filtros iniciales pasados...")
         welcome_role_id : int = self.roles.common.WELCOME
 
         if any(role.id == welcome_role_id for role in after.roles):
+            logger.info("[RECUPERACIÓN ROL BIENVENIDA]: El usuario YA POSEE el rol de bienvenida.")
             return False
+
+        logger.info("[RECUPERACIÓN ROL BIENVENIDA]: El usuario no posee el rol de bienvenida, asignando...")
         
-        welcome_cog : Union[commands.Cog, None]  = self.bot.get_cog("welcome")
+        welcome_cog : Union[commands.Cog, None]  = self.bot.get_cog("welcome") or self.bot.get_cog("Welcome")
         if welcome_cog is None:
-            logger.error("!!!No se pudo obtener el cog de bienvenida, revisar código!!!")
+            logger.error("[RECUPERACIÓN ROL BIENVENIDA]: !!!No se pudo obtener el cog de bienvenida, revisar código!!!")
             return False
-        
-        await welcome_cog.welcome_on_member_join(after) # type: ignore (imposible de evitar)
-        logger.info("Al usuario %s [%s] no se le asigno el rol de bienvenida, solucionando...",before.name,before.id)
+
+        try:
+            await welcome_cog.welcome_on_member_join(after) # type: ignore (imposible de evitar)
+        except Exception:
+            logger.exception("[RECUPERACIÓN ROL BIENVENIDA]: Ocurrio un error al utilizar el cog de bienvenida. Finalizando...")
+            return False
+        logger.info("[RECUPERACIÓN ROL BIENVENIDA]: La ejecución del cog de bienvenida finalizó sin excepciones. Usuario: %s [%s]. Finalizando...",before.name,before.id)
         return True
 
     #region on_member_update
