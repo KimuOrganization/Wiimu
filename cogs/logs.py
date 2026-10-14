@@ -519,36 +519,36 @@ class Logs(commands.Cog):
         
     async def _recover_missing_join_event(self, before: discord.Member, after: discord.Member, added_roles: set[discord.Role]) -> bool:
         """Recupera casos donde Discord no dispara on_member_join."""
-        logger.info("[RECUPERACIÓN ROL BIENVENIDA]: Iniciando proceso...")
+        logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: Iniciando...")
 
         if before.bot or after.bot:
-            logger.info("[RECUPERACIÓN ROL BIENVENIDA]: El usuario es un bot, finalizando recuperación...")
+            logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario es un bot, ignorando recuperación...")
             return False
 
         if not added_roles:
-            logger.info("[RECUPERACIÓN ROL BIENVENIDA]: El usuario no tiene roles nuevos, o la lista llego vacia...")
+            logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario no tiene roles nuevos, o la lista llego vacia (%s [%s]. Finalizando...)", before.name, before.id)
             return False
 
-        logger.info("[RECUPERACIÓN ROL BIENVENIDA]: Filtros iniciales pasados...")
+        logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: Filtros iniciales pasados...")
         welcome_role_id : int = self.roles.common.WELCOME
 
         if any(role.id == welcome_role_id for role in after.roles):
-            logger.info("[RECUPERACIÓN ROL BIENVENIDA]: El usuario YA POSEE el rol de bienvenida.")
+            logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario YA POSEE el rol de bienvenida. Finalizando...")
             return False
 
-        logger.info("[RECUPERACIÓN ROL BIENVENIDA]: El usuario no posee el rol de bienvenida, asignando...")
+        logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario no posee el rol de bienvenido, se intentara asignar.")
         
         welcome_cog : Union[commands.Cog, None]  = self.bot.get_cog("welcome") or self.bot.get_cog("Welcome")
         if welcome_cog is None:
-            logger.error("[RECUPERACIÓN ROL BIENVENIDA]: !!!No se pudo obtener el cog de bienvenida, revisar código!!!")
+            logger.error("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: !!!No se pudo obtener el cog de bienvenida, revisar código!!!")
             return False
 
         try:
             await welcome_cog.welcome_on_member_join(after) # type: ignore (imposible de evitar)
         except Exception:
-            logger.exception("[RECUPERACIÓN ROL BIENVENIDA]: Ocurrio un error al utilizar el cog de bienvenida. Finalizando...")
+            logger.exception("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: Ocurrio un error al utilizar el cog de bienvenida. Finalizando...")
             return False
-        logger.info("[RECUPERACIÓN ROL BIENVENIDA]: La ejecución del cog de bienvenida finalizó sin excepciones. Usuario: %s [%s]. Finalizando...",before.name,before.id)
+        logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: La ejecución del cog de bienvenida finalizó sin excepciones. Usuario: %s [%s]. Finalizando...",before.name,before.id)
         return True
 
     #region on_member_update
@@ -604,7 +604,8 @@ class Logs(commands.Cog):
         removed_roles = before_roles - after_roles
 
         # Arreglar bug de que no se asigne el rol de bienvenida por un conflicto con las integraciones de discord añadiendo roles por ser miembros o donadores del canal
-        await self._recover_missing_join_event(before,after,added_roles)
+        if len(added_roles) > 0:
+            await self._recover_missing_join_event(before,after,added_roles)
 
         if added_roles or removed_roles:
             embed = discord.Embed(
