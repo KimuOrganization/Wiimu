@@ -66,6 +66,15 @@ class Logs(commands.Cog):
     @property
     def staff_role_id(self) -> int:
         return self.roles.staff.MODERATORS
+
+
+    @commands.Cog.listener("on_resumed")
+    async def evt_on_resumed(self):
+        logger.warning("Gateway: sesión reanudada correctamente")
+
+    @commands.Cog.listener("on_ready")
+    async def evt_on_ready(self):
+        logger.info("Gateway: bot listo; conexión inicializada")
     
     #region on_member_join
     @commands.Cog.listener("on_member_join")
@@ -519,41 +528,41 @@ class Logs(commands.Cog):
         
     async def _recover_missing_join_event(self, before: discord.Member, after: discord.Member, added_roles: set[discord.Role]) -> bool:
         """Recupera casos donde Discord no dispara on_member_join."""
-        logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: Iniciando...")
+        logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: Iniciando... [%s (%s)]",before.name, before.id)
 
         if before.bot or after.bot:
-            logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario es un bot, ignorando recuperación...")
+            logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario es un bot, ignorando recuperación... [%s (%s)]",before.name, before.id)
             return False
 
         if not added_roles:
             logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario no tiene roles nuevos, o la lista llego vacia (%s [%s]. Finalizando...)", before.name, before.id)
             return False
 
-        logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: Filtros iniciales pasados...")
+        logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: Filtros iniciales pasados... [%s (%s)]",before.name, before.id)
         welcome_role_id : int = self.roles.common.WELCOME
 
         if any(role.id == welcome_role_id for role in after.roles):
-            logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario YA POSEE el rol de bienvenida. Finalizando...")
+            logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario YA POSEE el rol de bienvenida. Finalizando... [%s (%s)]",before.name, before.id)
             return False
 
-        logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario no posee el rol de bienvenido, se intentara asignar.")
+        logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario no posee el rol de bienvenido, se intentara asignar. [%s (%s)]",before.name, before.id)
         
         welcome_cog : Union[commands.Cog, None]  = self.bot.get_cog("welcome") or self.bot.get_cog("Welcome")
         if welcome_cog is None:
-            logger.error("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: !!!No se pudo obtener el cog de bienvenida, revisar código!!!")
+            logger.error("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: !!!No se pudo obtener el cog de bienvenida, revisar código!!! [%s (%s)]",before.name, before.id)
             return False
 
         try:
             await welcome_cog.welcome_on_member_join(after) # type: ignore (imposible de evitar)
         except Exception:
-            logger.exception("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: Ocurrio un error al utilizar el cog de bienvenida. Finalizando...")
+            logger.exception("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: Ocurrio un error al utilizar el cog de bienvenida. Finalizando... [%s (%s)]",before.name, before.id)
             return False
         logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: La ejecución del cog de bienvenida finalizó sin excepciones. Usuario: %s [%s]. Finalizando...",before.name,before.id)
         return True
 
     #region on_member_update
-    @commands.Cog.listener()
-    async def on_member_update(
+    @commands.Cog.listener("on_member_update")
+    async def log_on_member_update(
         self,
         before: discord.Member,
         after: discord.Member

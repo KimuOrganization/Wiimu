@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 from core.bot import Bot
 import asyncio
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,9 @@ from utils.image import create_welcome_image
 class Welcome(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot : Bot = bot
+
+        self._last_recovery_check:datetime | None = None
+        self._recovery_lock = asyncio.Lock()
 
     @property
     def channels(self):
