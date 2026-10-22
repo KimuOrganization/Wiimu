@@ -1,7 +1,5 @@
-from dis import disco
-from tkinter import N
 from venv import logger
-from weakref import ref
+import asyncio
 import discord
 from discord.ext import commands
 from datetime import datetime, timezone, timedelta
@@ -560,6 +558,19 @@ class Logs(commands.Cog):
         logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: La ejecución del cog de bienvenida finalizó sin excepciones. Usuario: %s [%s]. Finalizando...",before.name,before.id)
         return True
 
+    async def _recover_missing_join_event_background(
+        self,
+        before:discord.Member,
+        after:discord.Member,
+        added_roles: set[discord.Role]
+        ) -> None:
+        try:
+            await self._recover_missing_join_event(before,after,added_roles)
+        except Exception:
+            logger.exception(
+                "Error en la recuperación del evento de ingreso para %s (%s)",after.name,after.id
+            )
+
     #region on_member_update
     @commands.Cog.listener("on_member_update")
     async def log_on_member_update(
@@ -614,7 +625,9 @@ class Logs(commands.Cog):
 
         # Arreglar bug de que no se asigne el rol de bienvenida por un conflicto con las integraciones de discord añadiendo roles por ser miembros o donadores del canal
         if len(added_roles) > 0:
-            await self._recover_missing_join_event(before,after,added_roles)
+            asyncio.create_task(
+                self._recover_missing_join_event_background(before,after,added_roles)
+            )
 
         if added_roles or removed_roles:
             embed = discord.Embed(
