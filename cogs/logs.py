@@ -1,6 +1,7 @@
 from venv import logger
 import asyncio
 import discord
+from discord import channel
 from discord.ext import commands
 from datetime import datetime, timezone, timedelta
 from cogs.moderation import send_moderation_dm
@@ -65,14 +66,13 @@ class Logs(commands.Cog):
     def staff_role_id(self) -> int:
         return self.roles.staff.MODERATORS
 
-
-    @commands.Cog.listener("on_resumed")
-    async def evt_on_resumed(self):
-        logger.warning("Gateway: sesión reanudada correctamente")
-
     @commands.Cog.listener("on_ready")
     async def evt_on_ready(self):
-        logger.info("Gateway: bot listo; conexión inicializada")
+        logger.info(
+            "\n-------------------------------------------"
+            "\nGateway: bot listo; conexión inicializada"
+            "\n-------------------------------------------"
+            )
     
     #region on_member_join
     @commands.Cog.listener("on_member_join")
@@ -767,6 +767,90 @@ class Logs(commands.Cog):
         embed.set_footer(text=f"ID: {user.id}")
 
         await send_moderation_log(guild=guild,message=staff_mention,embed=embed,command_log_channel_id=self.command_log_channel_id)
+
+    @commands.Cog.listener("on_command_error")
+    async def internal_log_on_command_error(
+        self,
+        ctx: commands.Context,
+        error: commands.CommandError
+        ) -> None:
+        user = ctx.author
+        guild = ctx.guild
+        command_name = ctx.invoked_with or "<desconocido>"
+
+        guild_info = (
+            f"{guild.name} ({guild.id})" if guild else "DM"
+        )
+
+        channel_info = (
+            f"{ctx.channel} ({ctx.channel.id})" if ctx.channel else "<desconocido>"
+        )
+
+        # Comando no encontrado
+        if isinstance(error, commands.CommandNotFound):
+            logger.warning(
+                "COMANDO INEXISTENTE | Usuario=%s (%s) | "
+                "Servidor=%s | Canal=%s | Comando=%s",
+                user.name,
+                user.id,
+                guild_info,
+                channel_info,
+                command_name
+            )
+            return
+
+        # Permisos insuficientes para ejecutar el comando
+        if isinstance(error, commands.MissingPermissions):
+            logger.warning(
+                "PERMISOS INSUFICIENTES | Usuario=%s (%s) | "
+                "Servidor=%s | Canal=%s | Comando=%s | Permisos=%s",
+                user.name,
+                user.id,
+                guild_info,
+                channel_info,
+                command_name,
+                ", ".join(error.missing_permissions)
+            )
+            return
+
+        # Permisos insuficientes (del bot) para ejecutar un comando
+        if isinstance(error, commands.BotMissingPermissions):
+            logger.error(
+                "EL BOT NO TIENE PERMISOS | Servidor=%s | "
+                "Canal=%s | Comando=%s | Permisos=%s",
+                guild_info,
+                channel_info,
+                command_name,
+                ", ".join(error.missing_permissions)
+            )
+            return
+
+        if isinstance(error, commands.CheckFailure):
+            logger.warning(
+                "CHECK FALLIDO | Usuario=%s (%s) | "
+                "Servidor=%s | Canal=%s | Comando=%s | Error=%s",
+                user.name,
+                user.id,
+                guild_info,
+                channel_info,
+                command_name,
+                type(error).__name__
+            )
+            return
+
+        # Errores no contemplados
+        logger.error(
+            "ERROR DE COMANDO | Usuario=%s (%s) | "
+            "Servidor=%s | Canal=%s | Comando=%s | Error=%s",
+            user.name,
+            user.id,
+            guild_info,
+            channel_info,
+            command_name,
+            type(error).__name__,
+            exc_info=(type(error), error, error.__traceback__)
+        )
+    
 
 async def setup(bot):
     await bot.add_cog(Logs(bot))
