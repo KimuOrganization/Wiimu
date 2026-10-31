@@ -64,7 +64,7 @@ class Minecraft(commands.Cog):
         )
         embed.set_author(name=f"{guild.name}",icon_url=guild.icon.url if guild.icon else None)
         embed.set_footer(
-            text=f"Net café • Ante cualquier duda o consulta, comunicarse con alguien del staff ({staff_role})"
+            text=f"Net café • Ante cualquier duda o consulta, comunicarse con alguien del staff ( {staff_role} )"
         )
         await interaction.response.send_message(
             embed=embed,
