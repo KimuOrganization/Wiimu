@@ -29,26 +29,26 @@ class Minecraft(commands.Cog):
         )
         embed.add_field(
             name="**🌐 Información del servidor**",
-            value="**IP:** `play.kimu.moe`\nVersión: `Java 26.2`",
+            value="**IP:** `play.kimu.moe`\n**Versión:** `Java 26.2`\n\n",
             inline=False
         )
         embed.add_field(
             name="**🔐 ¿Cómo ingreso si soy no premium?**",
             value=(
-                "1. Ingresa al servidor.\n"
-                "2. Si es tu primera vez, registrate con:\n"
+                "**1.** Ingresa al servidor.\n"
+                "**2.** Si es tu primera vez, registrate con:\n"
                 "   `/register contraseña contraseña`\n"
-                "3. En tus proximos ingresos, inicia sesión con:\n"
-                "   `/login contraseña`"
+                "**3.** En tus proximos ingresos, inicia sesión con:\n"
+                "   `/login contraseña`\n\n"
             ),
             inline=False
         )
         embed.add_field(
             name="**🔗 Vincula tu cuenta con Discord**",
             value=(
-                "1. Una vez dentro del servidor, veras que en el chat de minecraft aparecera un mensaje diciendo que utilices /link xxxxx.\n"
-                "2. Ve al servidor de discord, escribe /link en cualquier canal de texto, y veras el comando de un bot llamado `Kimu.jar`, presionalo e ingresa el código que te brindo el servidor de minecraft. (No te preocupes, nadie vera que ejecutas el comando!)"
-                "3. Si la vinculación es exitosa, ya te podras mover en el servidor de minecraft, y veras tu rol del servidor de discord en la lista de jugadores de minecraft presionando TAB."
+                "**1.** Una vez dentro del servidor, veras que en el chat de minecraft aparecera un mensaje diciendo que utilices `/link xxxxx`.\n"
+                "**2.** Ve al servidor de discord, escribe `/link` en cualquier canal de texto, y veras el comando de un bot llamado `Kimu.jar`, presionalo e ingresa el código que te brindo el servidor de minecraft. (No te preocupes, nadie vera que ejecutas el comando!)\n"
+                "**3.** Si la vinculación es exitosa, ya te podras mover en el servidor de minecraft, y veras tu rol del servidor de discord en la lista de jugadores de minecraft presionando TAB.\n\n"
             ),
             inline=False
         )
