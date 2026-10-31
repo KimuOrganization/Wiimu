@@ -20,7 +20,7 @@ class Minecraft(commands.Cog):
             return
         
         embed = discord.Embed(
-            title="Servidor de minecraft",
+            title="Instrucciones de ingreso al servidor de minecraft",
             description=(
                 "Conectate a nuestro servidor de minecraft y vinculá tu cuenta de discord al ingresar al servidor! __No importa si sos premium o no premium__ <3.\n"
                 "Por cierto, hay un mapa web del mundo 👀\n"
@@ -47,14 +47,14 @@ class Minecraft(commands.Cog):
             name="**🔗 Vincula tu cuenta con Discord**",
             value=(
                 "**1.** Una vez dentro del servidor, veras que en el chat de minecraft aparecera un mensaje diciendo que utilices `/link xxxxx`.\n"
-                "**2.** Ve al servidor de discord, escribe `/link` en cualquier canal de texto, y veras el comando de un bot llamado `Kimu.jar`, presionalo e ingresa el código que te brindo el servidor de minecraft. (No te preocupes, nadie vera que ejecutas el comando!)\n"
+                "**2.** Ve al servidor de discord, escribe `/link` en cualquier canal de texto, y veras el comando de un bot llamado `Kimu.jar`, presionalo e __ingresa el código que te brindo el servidor de minecraft.__ (No te preocupes, nadie vera que ejecutas el comando!)\n"
                 "**3.** Si la vinculación es exitosa, ya te podras mover en el servidor de minecraft, y veras tu rol del servidor de discord en la lista de jugadores de minecraft presionando TAB.\n\u2800"
             ),
             inline=False
         )
         embed.set_author(name=f"{guild.name}",icon_url=guild.icon.url if guild.icon else None)
         embed.set_footer(
-            text="Net café • ¡Nos vemos dentro!"
+            text=f"Net café • Ante cualquier duda o consulta, comunicarse con alguien del staff (<@&1084623032049483826>)"
         )
         await interaction.response.send_message(
             embed=embed,
