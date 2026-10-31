@@ -2,12 +2,17 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from core.config import GUILD_ID
+from core.config_sections.roles import Roles
 
 from core.bot import Bot
 
 class Minecraft(commands.Cog):
     def __init__(self, bot: Bot) -> None:
         self.bot = bot
+
+    @property
+    def roles(self) -> Roles:
+        return self.bot.config.roles # type: ignore
 
     @app_commands.guilds(int(GUILD_ID))
     @app_commands.command(
@@ -18,6 +23,11 @@ class Minecraft(commands.Cog):
         guild = interaction.guild
         if not guild:
             return
+
+        staff_role = guild.get_role(self.roles.staff.MODERATORS)
+        if staff_role is None:
+            return
+        staff_role = staff_role.mention
         
         embed = discord.Embed(
             title="Instrucciones de ingreso al servidor de minecraft",
@@ -54,7 +64,7 @@ class Minecraft(commands.Cog):
         )
         embed.set_author(name=f"{guild.name}",icon_url=guild.icon.url if guild.icon else None)
         embed.set_footer(
-            text=f"Net café • Ante cualquier duda o consulta, comunicarse con alguien del staff (<@&1084623032049483826>)"
+            text=f"Net café • Ante cualquier duda o consulta, comunicarse con alguien del staff ({staff_role})"
         )
         await interaction.response.send_message(
             embed=embed,
