@@ -47,7 +47,7 @@ class Minecraft(commands.Cog):
             name="**🔗 Vincula tu cuenta con Discord**",
             value=(
                 "**1.** Una vez dentro del servidor, veras que en el chat de minecraft aparecera un mensaje diciendo que utilices `/link xxxxx`.\n"
-                "**2.** Ve al servidor de discord, escribe `/link` en cualquier canal de texto, y veras el comando de un bot llamado `Kimu.jar`, presionalo e __ingresa el código que te brindo el servidor de minecraft.__ (No te preocupes, nadie vera que ejecutas el comando!)\n"
+                "**2.** Ve al servidor de discord, utiliza </link:1561260388870393907> en cualquier canal de texto, y veras el comando de la bot <@1543017075046481980>, presionalo e __ingresa el código que te brindo el servidor de minecraft.__ (No te preocupes, nadie vera que ejecutas el comando!)\n"
                 "**3.** Si la vinculación es exitosa, ya te podras mover en el servidor de minecraft, y veras tu rol del servidor de discord en la lista de jugadores de minecraft presionando TAB.\n\u2800"
             ),
             inline=False
