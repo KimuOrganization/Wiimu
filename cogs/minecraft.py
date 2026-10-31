@@ -24,12 +24,12 @@ class Minecraft(commands.Cog):
             description=(
                 "Conectate a nuestro servidor de minecraft y vinculá tu cuenta de discord al ingresar al servidor! __No importa si sos premium o no premium__ <3.\n"
                 "Por cierto, hay un mapa web del mundo 👀\n"
-                "https://map.kimu.moe/\n\n\u2800"
+                "https://map.kimu.moe/\n\u2800"
             )
         )
         embed.add_field(
             name="**🌐 Información del servidor**",
-            value="**IP:** `play.kimu.moe`\n**Versión:** `Java 26.2`\n\n\u2800",
+            value="**IP:** `play.kimu.moe`\n**Versión:** `Java 26.2`\n\u2800",
             inline=False
         )
         embed.add_field(
@@ -39,7 +39,7 @@ class Minecraft(commands.Cog):
                 "**2.** Si es tu primera vez, registrate con:\n"
                 "   `/register contraseña contraseña`\n"
                 "**3.** En tus proximos ingresos, inicia sesión con:\n"
-                "   `/login contraseña`\n\n\u2800"
+                "   `/login contraseña`\n\u2800"
             ),
             inline=False
         )
@@ -48,7 +48,7 @@ class Minecraft(commands.Cog):
             value=(
                 "**1.** Una vez dentro del servidor, veras que en el chat de minecraft aparecera un mensaje diciendo que utilices `/link xxxxx`.\n"
                 "**2.** Ve al servidor de discord, escribe `/link` en cualquier canal de texto, y veras el comando de un bot llamado `Kimu.jar`, presionalo e ingresa el código que te brindo el servidor de minecraft. (No te preocupes, nadie vera que ejecutas el comando!)\n"
-                "**3.** Si la vinculación es exitosa, ya te podras mover en el servidor de minecraft, y veras tu rol del servidor de discord en la lista de jugadores de minecraft presionando TAB.\n\n\u2800"
+                "**3.** Si la vinculación es exitosa, ya te podras mover en el servidor de minecraft, y veras tu rol del servidor de discord en la lista de jugadores de minecraft presionando TAB.\n\u2800"
             ),
             inline=False
         )
