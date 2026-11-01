@@ -62,6 +62,14 @@ class Minecraft(commands.Cog):
             ),
             inline=False
         )
+        embed.add_field(
+            name="**❌ ¿Problemas al acceder al servidor? ❌**",
+            value=(
+                "Revisa esta guia donde aparecen los errores conocidos y sus soluciones:\n"
+                "https://discord.com/channels/1084615499188535366/1566492796246827119/1566492796246827119\n\u2800"
+            ),
+            inline=False
+        )
         embed.set_author(name=f"{guild.name}",icon_url=guild.icon.url if guild.icon else None)
         embed.set_footer(
             text=f"Net café • Ante cualquier duda o consulta, comunicarse con alguien del staff."
