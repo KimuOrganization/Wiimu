@@ -533,16 +533,15 @@ class Logs(commands.Cog):
 
         if before.bot or after.bot:
             logger.info(
-                "[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario es un bot, ignorando recuperación... [%s (%s)]",before.name, before.id,
-                "\n-----------------------------------------------------------------"
+                "[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario es un bot, ignorando recuperación... [%s (%s)]",before.name, before.id
                 )
+            logger.info("-----------------------------------------------------------------")
             return False
 
         if not added_roles:
             logger.info(
-                "[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario no tiene roles nuevos, o la lista llego vacia (%s [%s]. Finalizando...)", before.name, before.id,
-                "\n-----------------------------------------------------------------"
-                )
+                "[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario no tiene roles nuevos, o la lista llego vacia (%s [%s]. Finalizando...)", before.name, before.id)
+            logger.info("-----------------------------------------------------------------")
             return False
 
         logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: Filtros iniciales pasados... [%s (%s)]",before.name, before.id)
@@ -550,9 +549,9 @@ class Logs(commands.Cog):
 
         if any(role.id == welcome_role_id for role in after.roles):
             logger.info(
-                "[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario YA POSEE el rol de bienvenida. Finalizando... [%s (%s)]",before.name, before.id,
-                "\n-----------------------------------------------------------------"
+                "[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario YA POSEE el rol de bienvenida. Finalizando... [%s (%s)]",before.name, before.id
                 )
+            logger.info("-----------------------------------------------------------------")
             return False
 
         logger.info("[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: El usuario no posee el rol de bienvenido, se intentara asignar. [%s (%s)]",before.name, before.id)
@@ -560,23 +559,23 @@ class Logs(commands.Cog):
         welcome_cog : Union[commands.Cog, None]  = self.bot.get_cog("welcome") or self.bot.get_cog("Welcome")
         if welcome_cog is None:
             logger.error(
-                "[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: !!!No se pudo obtener el cog de bienvenida, revisar código!!! [%s (%s)]",before.name, before.id,
-                "\n-----------------------------------------------------------------"
+                "[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: !!!No se pudo obtener el cog de bienvenida, revisar código!!! [%s (%s)]",before.name, before.id
                 )
+            logger.info("-----------------------------------------------------------------")
             return False
 
         try:
             await welcome_cog.welcome_on_member_join(after) # type: ignore (imposible de evitar)
         except Exception:
             logger.exception(
-                "[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: Ocurrio un error al utilizar el cog de bienvenida. Finalizando... [%s (%s)]",before.name, before.id,
-                "\n-----------------------------------------------------------------"
+                "[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: Ocurrio un error al utilizar el cog de bienvenida. Finalizando... [%s (%s)]",before.name, before.id
                 )
+            logger.info("-----------------------------------------------------------------")
             return False
         logger.info(
-            "[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: La ejecución del cog de bienvenida finalizó sin excepciones. Usuario: %s [%s]. Finalizando...",before.name,before.id,
-            "\n-----------------------------------------------------------------"
+            "[PROCESO DE RECUPERACIÓN ROL BIENVENIDA]: La ejecución del cog de bienvenida finalizó sin excepciones. Usuario: %s [%s]. Finalizando...",before.name,before.id
             )
+        logger.info("-----------------------------------------------------------------")
         return True
 
     async def _recover_missing_join_event_background(
