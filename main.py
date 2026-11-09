@@ -28,6 +28,7 @@ root_logger.setLevel(logging.INFO)
 root_logger.handlers.clear()
 root_logger.addHandler(handler)
 
+logging.getLogger("discord.state").setLevel(logging.DEBUG)
 
 bot = Bot(
     command_prefix=commands.when_mentioned,
