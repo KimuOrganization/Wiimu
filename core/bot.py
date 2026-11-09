@@ -5,11 +5,15 @@ from core.cache import Cache
 from core.config import BOT_FEATURES, GUILD_ID
 import discord
 from typing import Union
+import json
 
 from core.config_manager import ConfigManager
 from core.database import Database
 
 logger = logging.getLogger(__name__)
+
+# DEBUGGING
+WATCH_EVENTS = {"GUILD_MEMBER_ADD", "GUILD_MEMBER_UPDATE", "GUILD_MEMBER_REMOVE"}
 
 class Bot(commands.Bot):
     def __init__(self, **kwargs):
@@ -57,6 +61,24 @@ class Bot(commands.Bot):
         except Exception:
             logger.exception("No se pudieron sincronizar los comandos.")
             raise
+
+    # DEBUGGING
+    async def on_socket_raw_receive(self, msg):
+        if not isinstance(msg, str):
+            return
+        if not any(e in msg for e in WATCH_EVENTS):
+            return
+        try:
+            data = json.loads(msg)
+        except ValueError:
+            return
+        if data.get("t") in WATCH_EVENTS:
+            d = data["d"]
+            user_id = d.get("user", {}).get("id")
+            logger.warning(
+                "RAW %s user=%s roles=%s pending=%s",
+                data["t"], user_id, d.get("roles"), d.get("pending"),
+            )
 
     async def close(self):
         logger.info("Apagando bot...")

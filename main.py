@@ -32,7 +32,8 @@ root_logger.addHandler(handler)
 bot = Bot(
     command_prefix=commands.when_mentioned,
     intents=INTENTS,
-    application_id=int(APP_ID)
+    application_id=int(APP_ID),
+    enable_debug_events=True
 )
 
 if __name__ == '__main__':
