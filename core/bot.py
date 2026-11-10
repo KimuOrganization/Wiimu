@@ -62,24 +62,6 @@ class Bot(commands.Bot):
             logger.exception("No se pudieron sincronizar los comandos.")
             raise
 
-    # DEBUGGING
-    async def on_socket_raw_receive(self, msg):
-        if not isinstance(msg, str):
-            return
-        if not any(e in msg for e in WATCH_EVENTS):
-            return
-        try:
-            data = json.loads(msg)
-        except ValueError:
-            return
-        if data.get("t") in WATCH_EVENTS:
-            d = data["d"]
-            user_id = d.get("user", {}).get("id")
-            logger.warning(
-                "RAW %s user=%s roles=%s pending=%s",
-                data["t"], user_id, d.get("roles"), d.get("pending"),
-            )
-
     async def close(self):
         logger.info("Apagando bot...")
 

@@ -2,21 +2,26 @@ import logging
 import discord
 from discord.ext import commands
 from core.bot import Bot
+import time
 import asyncio
-from datetime import datetime
-
-logger = logging.getLogger(__name__)
-
 from core.config import (
     WELCOME_IMAGE_PATH,
     WELCOME_CANVAS
 )
-
 from utils.image import create_welcome_image
+import json
+logger = logging.getLogger(__name__)
+
+HANDLED_TTL_SECONDS = 600
 
 class Welcome(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot : Bot = bot
+
+        self._handled:dict[int, float] = {}
+        self._handled_lock = asyncio.Lock()
+
+        self._bg_tasks: set[asyncio.Task] = set()
 
     @property
     def channels(self):
@@ -25,6 +30,12 @@ class Welcome(commands.Cog):
     @property
     def roles(self):
         return self.bot.config.roles # type: ignore
+
+    def _spawn(self, coro) -> None:
+        """Lanza una tarea en segundo plano manteniendo una referencia a ella"""
+        task = asyncio.create_task(coro)
+        self._bg_tasks.add(task)
+        task.add_done_callback(self._bg_tasks.discard)
 
     async def send_welcome(self, member: discord.Member):
         guild = member.guild
@@ -113,16 +124,89 @@ class Welcome(commands.Cog):
                 member.id
             )
 
+    async def handle_new_member(self, member: discord.Member, source:str) -> bool:
+        """Punto idempotente de entrada de miembros al servidor. (puede ser llamado de distintos lugares sin duplicar la bienvenida)"""
+        if member.bot:
+            return False
+
+        async with self._handled_lock:
+            now = time.monotonic()
+            # Limpieza de entradas vencidas
+            self._handled = {
+                member_id: ts
+                for member_id, ts in self._handled.items()
+                if now - ts < HANDLED_TTL_SECONDS
+            }
+
+            if member.id in self._handled:
+                logger.info(
+                    "Bienvenida ya procesada para %s (%s). Origen ingorado: %s",
+                    member, member.id, source
+                )
+                return False
+
+            if any(role.id == self.roles.common.WELCOME for role in member.roles):
+                logger.info(
+                    "El usuario %s (%s) ya posee el rol de bienvenida. Origen ignorado. %s",
+                    member, member.id, source
+                )
+                return False
+
+            self._handled[member.id] = now
+
+        logger.info(
+            "Procesando bienvenida para %s (%s). Origen: %s",
+            member, member.id, source
+        )
+
+        # Imagen + mensaje en paralelo, no es prioritario
+        self._spawn(self.send_welcome(member))
+
+        # Priorizo rol de bienvenida
+        await self.give_welcome_role(member)
+
+        return True
+
     @commands.Cog.listener("on_member_join")
     async def welcome_on_member_join(self, member: discord.Member):
-        if (member.bot):
-            return
-        
-        # Creo una tarea para que se cree la imagen y se mande el mensaje de bienvenida en "paralelo" ya que no es prioritario
-        asyncio.create_task(self.send_welcome(member))
+        await self.handle_new_member(member, source="on_member_join")
 
-        # Priorizo y espero a que se de el rol de bienvenida (critico)
-        await self.give_welcome_role(member)
+    @commands.Cog.listener("on_member_remove")
+    async def forget_member_on_leave(self, member: discord.Member):
+        # Si se va y vuelve a entrar, limpiarlo en los registros recientes para que reciba la bienvenida de nuevo
+        async with self._handled_lock:
+            self._handled.pop(member.id, None)
+
+    @commands.Cog.listener("on_socket_raw_receive")
+    async def raw_member_add_fallback(self, msg):
+        """Utiliza la información del socket para darle la bienvenida a los miembros que tengan roles con integraciones a la hora de unirse al servidor y no disparen el evento de on_member_join"""
+        # Descartar casi todo el tráfico del gateway sin parsear JSON
+        if not isinstance(msg, str) or "GUILD_MEMBER_ADD" not in msg:
+            return
+        try:
+            data = json.loads(msg)
+        except ValueError:
+            return
+        if data.get("t") != "GUILD_MEMBER_ADD":
+            return
+
+        d = data["d"]
+        if d.get("user", {}).get("bot"):
+            return
+
+        self._spawn(self._fallback_welcome(int(d["guild_id"]), int(d["user"]["id"])))
+
+    async def _fallback_welcome(self, guild_id: int, user_id: int):
+        # Dejar que on_member_join corra primero si es que se dispara
+        await asyncio.sleep(2)
+        try:
+            guild = self.bot.get_guild(guild_id)
+            if guild is None:
+                return
+            member = guild.get_member(user_id) or await guild.fetch_member(user_id)
+            await self.handle_new_member(member, source="raw_member_add_fallback")
+        except Exception:
+            logger.exception("Error en respaldo de bienvenida para %s", user_id)
 
 async def setup(bot: Bot):
     await bot.add_cog(Welcome(bot))

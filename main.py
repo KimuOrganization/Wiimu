@@ -28,13 +28,12 @@ root_logger.setLevel(logging.INFO)
 root_logger.handlers.clear()
 root_logger.addHandler(handler)
 
-logging.getLogger("discord.state").setLevel(logging.DEBUG)
-
 bot = Bot(
     command_prefix=commands.when_mentioned,
     intents=INTENTS,
     application_id=int(APP_ID),
-    enable_debug_events=True
+    # No quitar, gracias a esto se puede interactuar con el texto crudo que envia el socket y realizar tareas tales como la recuperación de usuarios que entran al servidor con roles de integración y no reciben la bienvenida.
+    enable_debug_events=True 
 )
 
 if __name__ == '__main__':
