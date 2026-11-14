@@ -19,9 +19,19 @@ URL_REGEX = re.compile(
 
 BLACKLIST_HOSTS = (
     "twitter.com",
+    "fxtwitter.com",
+    "vxtwitter.com"
+    "fixupx.com",
+    "xfixup.com",
+    "fixvx.com",
+    "twittpr.com",
     "x.com",
     "tiktok.com",
     "instagram.com",
+    "kkinstagram.com",
+    "instagramez.com",
+    "oginstagram.com",
+    "ddinstagram.com"
     "facebook.com",
     "fb.watch",
     "reddit.com",
@@ -29,6 +39,9 @@ BLACKLIST_HOSTS = (
     "twitch.tv",
     "discord.com",
     "discord.gg",
+    "youtube.com",
+    "youtu.be",
+    "yt.be"
 )
 
 def has_attachments(message: discord.Message) -> bool:

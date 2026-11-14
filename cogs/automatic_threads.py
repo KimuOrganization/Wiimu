@@ -85,7 +85,7 @@ class AutomaticThreads(commands.Cog):
                 f"Se elimino tu mensaje en {channel.mention}.\n\n"
                 "**Para publicar:**\n"
                 "• Envía una imagen, video, archivo o cualquier otro adjunto.\n"
-                "• También puedes enviar un enlace (URL).\n\n"
+                "• También puedes enviar un enlace (URL) [No se permiten links a redes sociales!].\n\n"
                 "**Si deseas responder a una publicación:**\n"
                 "Hazlo dentro del hilo correspondiente, no directamente en el canal.\n\n"
                 "Si continúas enviando mensajes invalidos repetidamente, "
